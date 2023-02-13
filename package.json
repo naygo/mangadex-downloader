@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/naygo/mangadex-downloader/issues"
   },
-  "homepage": "https://github.com/naygo/mangadex-downloader#readme"
+  "homepage": "https://github.com/naygo/mangadex-downloader#readme",
+  "devDependencies": {
+    "git-commit-msg-linter": "^4.7.3"
+  }
 }
