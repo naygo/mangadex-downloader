@@ -5,7 +5,14 @@ const main = async (): Promise<void> => {
   const mangaInfo = await getUserManga()
   console.log(mangaInfo)
 
-  downloadManga()
+  if (mangaInfo == null) {
+    console.log('Manga não encontrado')
+    return
+  }
+
+  downloadManga(mangaInfo.id)
+  // TODO - images to pdf
+  // TODO - pdf to MOBI
 }
 
 void main()
