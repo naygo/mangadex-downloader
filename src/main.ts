@@ -1,5 +1,5 @@
 import { prompt } from 'enquirer'
-import { getMangaById, findMangasByName } from './service/mangadex-client'
+import { getMangaById, findMangasByName } from './service/mangadex/mangadex-client'
 
 import type { Manga } from './interfaces/manga'
 

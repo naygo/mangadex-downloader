@@ -1,0 +1,13 @@
+[
+  {
+    "id": "231d5196-1f41-4eba-af8d-841d40bc548d",
+    "name": "Homunculus",
+    "exceptions": [
+      {
+        "volume": "1",
+        "chapters": ["cea7f324-1792-4cea-bc52-79258b722b5b"],
+        "reason": "This chapter, named NONE, is the same as the previous chapter, named ONE."
+      }
+    ]
+  }
+]

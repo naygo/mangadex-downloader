@@ -1,5 +1,5 @@
-import type { MangadexApiReponse } from '../interfaces/api'
-import type { Manga } from '../interfaces/manga'
+import type { MangadexApiReponse } from '../../interfaces/api'
+import type { Manga } from '../../interfaces/manga'
 import { mangadexClient } from './mangadex-api-data'
 
 export const findMangasByName = async (title: string, page?: number): Promise<MangadexApiReponse<Manga[]>> => {
