@@ -70,6 +70,7 @@ export interface TagAttributes {
 
 export interface Title {
   en: string
+  ja: string
 }
 
 export interface Relationship {

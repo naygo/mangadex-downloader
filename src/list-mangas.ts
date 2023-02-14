@@ -1,7 +1,9 @@
 import { prompt } from 'enquirer'
+import { MangaDex } from './classes'
 import type { MangadexApiReponse } from './models/interfaces/api'
 import type { Manga } from './models/interfaces/manga'
-import { findMangasByName } from './utils/mangadex/mangadex-client'
+
+const mangadex = new MangaDex()
 
 export function formatChoicesToListMangas(
   mangas: MangadexApiReponse<Manga[]>
@@ -9,18 +11,18 @@ export function formatChoicesToListMangas(
   const { offset, total } = mangas
   const page = offset != null ? offset : 0
 
-  console.log(...mangas.data.map((manga) => manga.attributes.title))
+  const choices = [
+    ...mangas.data
+      .map((manga) => manga.attributes.title.en || manga.attributes.title.ja)
+      .filter((manga) => manga != null),
+    ...(total > 10 && page > 0 ? ['Página anterior'] : []),
+    ...(total > 10 && page < total ? ['Próxima página'] : [])
+  ]
 
   return {
     page,
     total,
-    choices: [
-      ...mangas.data
-        .map((manga) => manga.attributes.title.en)
-        .filter((manga) => manga != null),
-      ...(total > 10 && page > 0 ? ['Página anterior'] : []),
-      ...(total > 10 && page < total ? ['Próxima página'] : [])
-    ]
+    choices
   }
 }
 
@@ -29,6 +31,7 @@ export async function getSelectedMangaInfo(
   searchName: string
 ): Promise<Manga> {
   const { page, total, choices } = formatChoicesToListMangas(mangas)
+
   let choice = ''
 
   while (choice === '') {
@@ -42,7 +45,7 @@ export async function getSelectedMangaInfo(
 
     if (choice === 'Próxima página' || choice === 'Página anterior') {
       const newPage = choice === 'Próxima página' ? page + 1 : page - 1
-      mangas = await findMangasByName(searchName, newPage)
+      mangas = await mangadex.findByTitle(searchName, newPage)
       choice = ''
     }
 
@@ -50,7 +53,9 @@ export async function getSelectedMangaInfo(
   }
 
   const mangaInfo = mangas.data.find(
-    (manga) => manga.attributes.title.en === choice
+    (manga) =>
+      manga.attributes.title.en === choice ||
+      manga.attributes.title.ja === choice
   )
 
   if (mangaInfo == null) throw new Error('Manga não encontrado')
