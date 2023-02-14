@@ -10,7 +10,8 @@ export const findMangasByName = async (
     await mangadexClient.get('/manga', {
       params: {
         title,
-        offset: page
+        offset: page,
+        'order[relevance]': 'desc'
       }
     })
 

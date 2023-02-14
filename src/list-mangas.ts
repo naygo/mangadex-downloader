@@ -9,6 +9,8 @@ export function formatChoicesToListMangas(
   const { offset, total } = mangas
   const page = offset != null ? offset : 0
 
+  console.log(...mangas.data.map((manga) => manga.attributes.title))
+
   return {
     page,
     total,
@@ -50,6 +52,7 @@ export async function getSelectedMangaInfo(
   const mangaInfo = mangas.data.find(
     (manga) => manga.attributes.title.en === choice
   )
+
   if (mangaInfo == null) throw new Error('Manga não encontrado')
 
   return mangaInfo

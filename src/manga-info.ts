@@ -51,8 +51,8 @@ async function getMangaInfo(): Promise<Manga | null> {
 }
 
 async function getMangaByName(mangaName: string): Promise<Manga> {
-  const mangasFounded = await findMangasByName(mangaName)
-  const mangaInfo = await getSelectedMangaInfo(mangasFounded, mangaName)
+  const mangasFound = await findMangasByName(mangaName)
+  const mangaInfo = await getSelectedMangaInfo(mangasFound, mangaName)
 
   if (mangaInfo == null) throw new Error('Manga não encontrado')
 
