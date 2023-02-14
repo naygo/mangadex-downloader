@@ -10,6 +10,7 @@ const main = async (): Promise<void> => {
     return
   }
 
+  // TODO - get volumes and chapters to download
   downloadManga(mangaInfo.id)
   // TODO - images to pdf
   // TODO - pdf to MOBI
