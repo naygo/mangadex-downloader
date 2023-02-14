@@ -5,9 +5,7 @@ import { readUserManga } from './read-user-manga'
 import { ChoiceEnum } from './models/enums/choice'
 import { getSelectedMangaInfo } from './list-mangas'
 import { prompt } from 'enquirer'
-import { MangaDex } from './classes'
-
-const mangadex = new MangaDex()
+import { findMangaById, findMangaByTitle } from './utils/mangadex'
 
 export async function getUserManga(): Promise<Manga | null> {
   try {
@@ -35,13 +33,14 @@ export async function getUserManga(): Promise<Manga | null> {
 }
 
 async function getMangaInfo(): Promise<Manga | null> {
-  let mangaInfo: Manga | null = null
   const searchManga = await readUserManga()
+
+  let mangaInfo: Manga | null = null
 
   if (searchManga.type === 'name') {
     mangaInfo = await getMangaByName(searchManga.manga)
   } else {
-    mangaInfo = (await mangadex.findById(searchManga.manga)).data
+    mangaInfo = (await findMangaById(searchManga.manga)).data
   }
 
   if (mangaInfo == null) {
@@ -54,7 +53,7 @@ async function getMangaInfo(): Promise<Manga | null> {
 }
 
 async function getMangaByName(mangaName: string): Promise<Manga> {
-  const mangasFound = await mangadex.findByTitle(mangaName)
+  const mangasFound = await findMangaByTitle(mangaName)
   const mangaInfo = await getSelectedMangaInfo(mangasFound, mangaName)
 
   if (mangaInfo == null) throw new Error('Manga não encontrado')
