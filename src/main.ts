@@ -8,13 +8,7 @@ import { downloadManga } from './download-manga'
 import { showMangaInfo } from './utils/show-manga-info'
 import { getSelectedMangaInfo } from './list-mangas'
 import { readUserManga } from './read-user-manga'
-
-enum ChoiceEnum {
-  YES = '👍 Sim',
-  BACK = '🔙 Voltar',
-  SEARCH_AGAIN = '🔎 Pesquisar outro mangá',
-  CANCEL = '❌ Cancelar'
-}
+import { ChoiceEnum } from './enums/choice'
 
 const main = async (): Promise<void> => {
   try {

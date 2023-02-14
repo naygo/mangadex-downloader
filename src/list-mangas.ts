@@ -1,7 +1,7 @@
 import { prompt } from 'enquirer'
 import type { MangadexApiReponse } from './interfaces/api'
 import type { Manga } from './interfaces/manga'
-import { findMangasByName } from './service/mangadex-client'
+import { findMangasByName } from './service/mangadex/mangadex-client'
 
 export function formatChoicesToListMangas (
   mangas: MangadexApiReponse<Manga[]>
