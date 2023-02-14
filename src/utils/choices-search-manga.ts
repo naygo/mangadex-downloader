@@ -3,7 +3,6 @@ export const choicesSearchManga = [
     name: 'name',
     message: 'Pesquisar por nome',
     type: 'nome'
-
   },
   {
     name: 'id',

@@ -1,11 +1,11 @@
 import { prompt } from 'enquirer'
-import type { MangadexApiReponse } from './interfaces/api'
-import type { Manga } from './interfaces/manga'
-import { findMangasByName } from './service/mangadex/mangadex-client'
+import type { MangadexApiReponse } from './models/interfaces/api'
+import type { Manga } from './models/interfaces/manga'
+import { findMangasByName } from './utils/mangadex/mangadex-client'
 
-export function formatChoicesToListMangas (
+export function formatChoicesToListMangas(
   mangas: MangadexApiReponse<Manga[]>
-): { page: number, total: number, choices: string[] } {
+): { page: number; total: number; choices: string[] } {
   const { offset, total } = mangas
   const page = offset != null ? offset : 0
 
@@ -22,7 +22,7 @@ export function formatChoicesToListMangas (
   }
 }
 
-export async function getSelectedMangaInfo (
+export async function getSelectedMangaInfo(
   mangas: MangadexApiReponse<Manga[]>,
   searchName: string
 ): Promise<Manga> {

@@ -5,7 +5,7 @@ import { resolve } from 'path'
 import PDFDocument from 'pdfkit'
 import sizeOf from 'image-size'
 
-export async function createChapterPDF (
+export async function createChapterPDF(
   caminhoDasImagens: string[],
   nomeManga: string,
   volume: string
@@ -18,7 +18,9 @@ export async function createChapterPDF (
     compress: true
   })
 
-  if (process.env.DOWNLOAD_FOLDER == null) throw new Error('Local de download não encontrado')
+  if (process.env.DOWNLOAD_FOLDER == null) {
+    throw new Error('Local de download não encontrado')
+  }
 
   const nomeArquivo = `${nomeManga} - Vol. ${volume}.pdf`
   const caminhoArquivo = resolve(process.env.DOWNLOAD_FOLDER, nomeArquivo)
@@ -26,8 +28,16 @@ export async function createChapterPDF (
 
   for (const imagem of caminhoDasImagens) {
     const dimensoes = sizeOf(imagem)
-    await manga
-      .addPage({ margin: 0, size: [dimensoes.width, dimensoes.height] })
+
+    if (dimensoes.width === undefined || dimensoes.height === undefined) {
+      throw new Error('Dimensões da imagem não encontradas')
+    }
+
+    manga
+      .addPage({
+        margin: 0,
+        size: [dimensoes.width, dimensoes.height]
+      })
       .image(imagem, 0, 0, {
         height: manga.page.height
       })
@@ -35,7 +45,8 @@ export async function createChapterPDF (
     unlinkSync(imagem)
   }
 
-  await manga.end()
+  manga.end()
+
   console.log('Arquivo PDF criado com sucesso! :D')
 
   return {

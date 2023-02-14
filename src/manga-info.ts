@@ -1,17 +1,17 @@
 import {
   findMangasByName,
   getMangaById
-} from './service/mangadex/mangadex-client'
+} from './utils/mangadex/mangadex-client'
 
-import type { Manga } from './interfaces/manga'
+import type { Manga } from './models/interfaces/manga'
 
 import { showMangaInfo } from './utils/show-manga-info'
 import { readUserManga } from './read-user-manga'
-import { ChoiceEnum } from './enums/choice'
+import { ChoiceEnum } from './models/enums/choice'
 import { getSelectedMangaInfo } from './list-mangas'
 import { prompt } from 'enquirer'
 
-export async function getUserManga (): Promise<Manga | null> {
+export async function getUserManga(): Promise<Manga | null> {
   try {
     const mangaInfo = await getMangaInfo()
     const confirmDownload = await confirmMangaSelection()
@@ -36,7 +36,7 @@ export async function getUserManga (): Promise<Manga | null> {
   }
 }
 
-async function getMangaInfo (): Promise<Manga | null> {
+async function getMangaInfo(): Promise<Manga | null> {
   let mangaInfo: Manga | null = null
   const searchManga = await readUserManga()
 
@@ -50,7 +50,7 @@ async function getMangaInfo (): Promise<Manga | null> {
   return mangaInfo
 }
 
-async function getMangaByName (mangaName: string): Promise<Manga> {
+async function getMangaByName(mangaName: string): Promise<Manga> {
   const mangasFounded = await findMangasByName(mangaName)
   const mangaInfo = await getSelectedMangaInfo(mangasFounded, mangaName)
 
@@ -59,7 +59,7 @@ async function getMangaByName (mangaName: string): Promise<Manga> {
   return mangaInfo
 }
 
-async function confirmMangaSelection (): Promise<ChoiceEnum> {
+async function confirmMangaSelection(): Promise<ChoiceEnum> {
   const { confirm }: { confirm: ChoiceEnum } = await prompt({
     type: 'select',
     name: 'confirm',
