@@ -6,7 +6,8 @@ export const findMangasByName = async (title: string, page?: number): Promise<Ma
   const response: { data: MangadexApiReponse<Manga[]> } = await mangadexClient.get('/manga', {
     params: {
       title,
-      offset: page
+      offset: page,
+      'order[relevance]': 'desc'
     }
   })
 
