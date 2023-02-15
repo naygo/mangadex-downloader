@@ -5,7 +5,7 @@ import type {
   MangadexApiReponse,
   MangaSearchMethod
 } from '../models/interfaces'
-import { formatChoicesToPrompt } from '../utils/mangadex'
+import { findSelectedMangaInfo, formatChoicesToPrompt } from '../utils/mangadex'
 
 import { mangaSearchMethodOptions } from './options'
 
@@ -53,56 +53,58 @@ async function findManga(mangaNameOrId: string): Promise<void> {
     mangaInfo = await getSelectedMangaInfo(mangaListResponse, mangaNameOrId)
   }
 
-  console.log(mangaInfo)
+  console.log(mangaInfo.id)
 }
 
-// Not working :( 😥
 export async function getSelectedMangaInfo(
-  mangas: MangadexApiReponse<Manga[]>,
-  searchName: string
+  mangaListResponse: MangadexApiReponse<Manga[]>,
+  mangaTitle: string
 ): Promise<Manga> {
-  const { page, total, choices } = formatChoicesToPrompt(mangas)
-
+  let page = 0
+  let mangaList = mangaListResponse
   let choice = ''
+  let hasNextOrPrevPage = true
 
-  while (choice === '') {
-    choice = await promptMangaChoices({ page, total, choices })
+  while (hasNextOrPrevPage) {
+    const { choices, currentPage, totalPages } =
+      formatChoicesToPrompt(mangaList)
 
-    if (choice === 'Próxima página' || choice === 'Página anterior') {
-      const newPage = choice === 'Próxima página' ? page + 1 : page - 1
-      mangas = await findMangaByTitle(searchName, newPage)
-      choice = ''
+    const { choice: selectedChoice } = await promptMangaChoices(
+      choices,
+      currentPage,
+      totalPages
+    )
+
+    if (selectedChoice === 'Next page') {
+      page = currentPage + 1
+      mangaList = await findMangaByTitle(mangaTitle, page)
+    } else if (selectedChoice === 'Previous page') {
+      page = currentPage - 1
+      mangaList = await findMangaByTitle(mangaTitle, page)
+    } else {
+      choice = selectedChoice
+      hasNextOrPrevPage = false
     }
 
     console.clear()
   }
 
-  const mangaInfo = mangas.data.find(
-    (manga) =>
-      manga.attributes.title.en === choice ||
-      manga.attributes.title.ja === choice
-  )
+  const mangaInfo = findSelectedMangaInfo(mangaList, choice)
 
-  if (mangaInfo == null) throw new Error('Manga não encontrado')
+  if (mangaInfo == null) throw new Error('Manga not found')
 
   return mangaInfo
 }
 
-async function promptMangaChoices({
-  page,
-  total,
-  choices
-}: {
-  page: number
-  total: number
-  choices: string[]
-}): Promise<string> {
-  const result = await prompt<{ choice: string }>({
+async function promptMangaChoices(
+  choices: string[],
+  currentPage: number,
+  totalPages: number
+): Promise<{ choice: string }> {
+  return await prompt<{ choice: string }>({
     type: 'select',
     name: 'choice',
-    message: `Mangas found: Page ${page} of ${total}`,
+    message: `Mangas found: Page ${currentPage + 1} of ${totalPages}`,
     choices
   })
-
-  return result.choice
 }

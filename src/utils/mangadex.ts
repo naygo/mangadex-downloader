@@ -2,25 +2,43 @@ import type { Manga, MangadexApiReponse } from '../models/interfaces'
 
 export function formatChoicesToPrompt(
   mangaListResponse: MangadexApiReponse<Manga[]>
-): { page: number; total: number; choices: string[] } {
-  const { offset = 0, total } = mangaListResponse
-  const page = offset != null ? offset : 0
+): { currentPage: number; totalPages: number; choices: string[] } {
+  const { offset = 0, data, total = 0 } = mangaListResponse
 
-  const mangaList = mangaListResponse.data
+  const currentPage = offset / 10
+  const totalPages = Math.ceil(total / 10)
 
-  const mangaTitles = mangaList
-    .map((manga) => manga.attributes.title.en || manga.attributes.title.ja)
-    .filter((title) => title != null)
+  const mangaTitles = new Set(
+    data
+      .map(({ attributes }) => attributes.title?.en || attributes.title?.ja)
+      .filter(Boolean)
+  )
+
+  const hasPreviousPage = offset > 0
+  const hasNextPage = currentPage + 1 < totalPages
 
   const choices = [
     ...mangaTitles,
-    ...(total > 10 && offset > 0 ? ['Previous page'] : []),
-    ...(total > 10 && offset < total ? ['Next page'] : [])
-  ]
+    hasPreviousPage ? 'Previous page' : '',
+    hasNextPage ? 'Next page' : ''
+  ].filter(Boolean) // Remove possible falsy values
 
   return {
-    page,
-    total,
+    currentPage,
+    totalPages,
     choices
   }
+}
+
+export function findSelectedMangaInfo(
+  mangaList: MangadexApiReponse<Manga[]>,
+  choice: string
+): Manga | null {
+  return (
+    mangaList.data.find(
+      (manga) =>
+        manga.attributes.title.en === choice ||
+        manga.attributes.title.ja === choice
+    ) ?? null
+  )
 }

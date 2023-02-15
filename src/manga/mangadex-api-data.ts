@@ -3,13 +3,16 @@ import { mangadexClient } from './mangadex-clients'
 
 export async function findMangaByTitle(
   title: string,
-  page?: number
+  page?: number,
+  limit = 10
 ): Promise<MangadexApiReponse<Manga[]>> {
+  const offset = page != null ? page * limit : 0
+
   const response: { data: MangadexApiReponse<Manga[]> } =
     await mangadexClient.get('/manga', {
       params: {
         title,
-        offset: page,
+        offset,
         'order[relevance]': 'desc'
       }
     })
