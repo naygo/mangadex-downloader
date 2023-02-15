@@ -1,4 +1,9 @@
-import type { MangadexApiReponse, Manga } from '@/models/interfaces'
+import type {
+  MangadexApiReponse,
+  Manga,
+  MangaDexResponse,
+  Cover
+} from '@/models/interfaces'
 import { mangadexClient } from './mangadex-clients'
 
 export async function findMangaByTitle(
@@ -26,6 +31,21 @@ export async function findMangaById(
 ): Promise<MangadexApiReponse<Manga>> {
   const response: { data: MangadexApiReponse<Manga> } =
     await mangadexClient.get(`/manga/${id}`)
+
+  return response.data
+}
+
+export async function getMangaCovers(
+  mangaId: string
+): Promise<MangadexApiReponse<MangaDexResponse<Cover>>> {
+  const response: { data: MangadexApiReponse<MangaDexResponse<Cover>> } =
+    await mangadexClient.get('/cover', {
+      params: {
+        limit: 100,
+        'manga[]': mangaId,
+        'order[volume]': 'asc'
+      }
+    })
 
   return response.data
 }

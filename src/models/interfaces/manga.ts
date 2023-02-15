@@ -1,10 +1,27 @@
 export type MangaSearchMethod = 'name' | 'id'
 
+export interface MangaDexResponse<T> {
+  id: string
+  type: string
+  attributes: T
+  relationships: Relationship[]
+}
+
 export interface Manga {
   id: string
   type: string
   attributes: MangaAttributes
   relationships: Relationship[]
+}
+
+export interface Cover {
+  createdAt: string
+  description: string
+  fileName: string
+  locale: string
+  updatedAt: string
+  version: number
+  volume: string
 }
 
 export interface MangaAttributes {
