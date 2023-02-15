@@ -1,6 +1,4 @@
 import { cli } from './cli'
-import { downloadManga } from './download-manga'
-import { getUserManga } from './manga-info'
 
 const main = async (): Promise<void> => {
   /*
