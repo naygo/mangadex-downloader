@@ -1,5 +1,8 @@
 import 'dotenv/config'
+
+import type { Chapter } from '@/models/interfaces/chapter'
 import { retry } from '@lifeomic/attempt'
+import { type AxiosResponse } from 'axios'
 import {
   createWriteStream,
   existsSync,
@@ -7,15 +10,11 @@ import {
   unlink,
   writeFileSync
 } from 'fs'
+import sizeOf from 'image-size'
 import { join, resolve } from 'path'
+import PDFDocument from 'pdfkit'
 import { findMangaChapters, findMangaVolumes } from './mangadex-api-data'
 import { mangadexUploadClient } from './mangadex-clients'
-
-import PDFDocument from 'pdfkit'
-import sizeOf from 'image-size'
-
-import type { Chapter } from '../models/interfaces/chapter'
-import type { AxiosResponse } from 'axios'
 
 interface DownloadImagesResponse {
   path: string
