@@ -1,18 +1,18 @@
 import { prompt } from 'enquirer'
 
-import { findMangaById, findMangaByTitle } from '../manga'
-import { ConfirmMangaSelectionEnum } from '../models/enums'
+import { findMangaById, findMangaByTitle } from '@/manga'
+import { ConfirmMangaSelectionEnum } from '@/models/enums'
 import type {
   Manga,
   MangadexApiReponse,
   MangaSearchMethod
-} from '../models/interfaces'
-import { mangaSearchMethodOptions } from './options'
+} from '@/models/interfaces'
 import {
   findSelectedMangaInfo,
   formatChoicesToPrompt,
   showMangaInfo
-} from '../utils/mangadex'
+} from '@/utils/mangadex'
+import { mangaSearchMethodOptions } from './options'
 
 export async function cli(): Promise<void> {
   console.clear()

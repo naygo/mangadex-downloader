@@ -1,4 +1,4 @@
-import type { Manga, MangadexApiReponse } from '../models/interfaces'
+import type { Manga, MangadexApiReponse } from '@/models/interfaces'
 
 export function formatChoicesToPrompt(
   mangaListResponse: MangadexApiReponse<Manga[]>

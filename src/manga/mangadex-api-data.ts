@@ -1,4 +1,4 @@
-import type { MangadexApiReponse, Manga } from '../models/interfaces'
+import type { MangadexApiReponse, Manga } from '@/models/interfaces'
 import { mangadexClient } from './mangadex-clients'
 
 export async function findMangaByTitle(
