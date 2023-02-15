@@ -48,12 +48,9 @@ export async function cli(): Promise<void> {
   if (!mangaInfo) throw new Error('Manga info is undefined')
 
   console.clear()
-  await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en)
-
-  console.clear()
 
   await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en)
-  const mangaCovers = await getAllMangaCovers(mangaInfo.id)
+  await getAllMangaCovers(mangaInfo.id)
 }
 
 async function getSearchMethod(): Promise<MangaSearchMethod> {
