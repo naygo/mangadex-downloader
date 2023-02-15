@@ -1,6 +1,6 @@
 import { prompt } from 'enquirer'
 
-import { findMangaById, findMangaByTitle, getMangaCovers } from '@/manga'
+import { findMangaById, findMangaByTitle } from '@/manga'
 import { ConfirmMangaSelectionEnum } from '@/models/enums'
 import type {
   Manga,
@@ -10,6 +10,7 @@ import type {
 import {
   findSelectedMangaInfo,
   formatChoicesToPrompt,
+  getAllMangaCovers,
   showMangaInfo
 } from '@/utils/mangadex'
 import { mangaSearchMethodOptions } from './options'
@@ -49,9 +50,10 @@ export async function cli(): Promise<void> {
   console.clear()
   await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en)
 
-  const covers = await getMangaCovers(mangaInfo.id)
+  console.clear()
 
-  console.log(covers)
+  await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en)
+  const mangaCovers = await getAllMangaCovers(mangaInfo.id)
 }
 
 async function getSearchMethod(): Promise<MangaSearchMethod> {

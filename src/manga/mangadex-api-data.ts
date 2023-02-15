@@ -44,12 +44,14 @@ export async function findMangaById(
 }
 
 export async function getMangaCovers(
-  mangaId: string
-): Promise<MangadexApiReponse<MangaDexResponse<Cover>>> {
-  const response: { data: MangadexApiReponse<MangaDexResponse<Cover>> } =
+  mangaId: string,
+  offset = 0
+): Promise<MangadexApiReponse<Array<MangaDexResponse<Cover>>>> {
+  const response: { data: MangadexApiReponse<Array<MangaDexResponse<Cover>>> } =
     await mangadexClient.get('/cover', {
       params: {
         limit: 100,
+        offset,
         'manga[]': mangaId,
         'order[volume]': 'asc'
       }

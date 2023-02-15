@@ -1,4 +1,5 @@
-import type { Manga, MangadexApiReponse } from '@/models/interfaces'
+import { getMangaCovers } from '@/manga'
+import type { Cover, Manga, MangadexApiReponse } from '@/models/interfaces'
 
 export function formatChoicesToPrompt(
   mangaListResponse: MangadexApiReponse<Manga[]>
@@ -59,4 +60,34 @@ export function showMangaInfo(manga: Manga): void {
   console.log(`Status: \x1b[33m${status}\x1b[0m`)
   console.log(`Demographic: \x1b[33m${publicationDemographic}\x1b[0m`)
   console.log(`Tags: \x1b[36m${formattedTags}\x1b[0m`)
+}
+
+// The mangaDex api only returns 100 results per page
+export async function getAllMangaCovers(mangaId: string): Promise<Cover[]> {
+  const covers: Cover[] = []
+
+  let offset = 0
+  let mangaCoverCount = 0
+
+  do {
+    const mangaCoversResponse = await getMangaCovers(mangaId, offset)
+
+    mangaCoverCount = mangaCoversResponse.total
+
+    for (const cover of mangaCoversResponse.data) {
+      const { attributes } = cover
+
+      if (attributes.volume === null) continue
+
+      const { volume } = attributes
+
+      if (volume.includes('.')) continue
+
+      covers.push(attributes)
+    }
+
+    offset += mangaCoversResponse.limit
+  } while (offset < mangaCoverCount)
+
+  return covers
 }
