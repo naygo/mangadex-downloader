@@ -1,7 +1,7 @@
 import type { Manga } from './models/interfaces/manga'
 
 import { readUserManga } from './read-user-manga'
-import { ChoiceEnum } from './models/enums/choice'
+import { ConfirmMangaSelectionEnum } from './models/enums/choices'
 import { getSelectedMangaInfo } from './list-mangas'
 import { prompt } from 'enquirer'
 import { findMangaById, findMangaByTitle } from './manga/mangadex-api-data'
@@ -13,14 +13,14 @@ export async function getUserManga(): Promise<Manga | null> {
     const confirmDownload = await confirmMangaSelection()
 
     switch (confirmDownload) {
-      case ChoiceEnum.YES:
+      case ConfirmMangaSelectionEnum.CONFIRM_DOWNLOAD:
         console.log('Baixando mangá...')
         return mangaInfo
-      case ChoiceEnum.SEARCH_AGAIN:
+      case ConfirmMangaSelectionEnum.SEARCH_AGAIN:
         console.log('Buscando novamente...')
         await getUserManga()
         break
-      case ChoiceEnum.CANCEL:
+      case ConfirmMangaSelectionEnum.CANCEL:
         console.log('Cancelando...')
         break
     }
@@ -61,12 +61,16 @@ async function getMangaByName(mangaName: string): Promise<Manga> {
   return mangaInfo
 }
 
-async function confirmMangaSelection(): Promise<ChoiceEnum> {
-  const { confirm }: { confirm: ChoiceEnum } = await prompt({
+async function confirmMangaSelection(): Promise<ConfirmMangaSelectionEnum> {
+  const { confirm }: { confirm: ConfirmMangaSelectionEnum } = await prompt({
     type: 'select',
     name: 'confirm',
     message: 'Deseja baixar o mangá?',
-    choices: [ChoiceEnum.YES, ChoiceEnum.SEARCH_AGAIN, ChoiceEnum.CANCEL]
+    choices: [
+      ConfirmMangaSelectionEnum.CONFIRM_DOWNLOAD,
+      ConfirmMangaSelectionEnum.SEARCH_AGAIN,
+      ConfirmMangaSelectionEnum.CANCEL
+    ]
   })
 
   return confirm
