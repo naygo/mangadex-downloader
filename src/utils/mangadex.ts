@@ -48,7 +48,7 @@ export function showMangaInfo(manga: Manga): void {
   const author = manga.relationships.find(
     (relationship) => relationship.type === 'author'
   )
-  const authorName = author?.attributes?.name ?? 'Unknown'
+  const authorName: string = author?.attributes?.name ?? 'Unknown'
   const formattedTags = tags.map((tag) => tag.attributes.name.en).join(', ')
 
   console.clear()
