@@ -51,6 +51,8 @@ export function showMangaInfo(manga: Manga): void {
   const authorName = author?.attributes?.name ?? 'Unknown'
   const formattedTags = tags.map((tag) => tag.attributes.name.en).join(', ')
 
+  console.clear()
+
   console.log(`Title: \x1b[33m${title.en || title.ja}\x1b[0m`)
   console.log(`Author: \x1b[33m${authorName}\x1b[0m`)
   console.log(`Release Date: \x1b[33m${year}\x1b[0m`)
