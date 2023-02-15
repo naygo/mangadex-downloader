@@ -1,6 +1,12 @@
 import 'dotenv/config'
 import { retry } from '@lifeomic/attempt'
-import { createWriteStream, existsSync, mkdirSync, unlink, writeFileSync } from 'fs'
+import {
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  unlink,
+  writeFileSync
+} from 'fs'
 import { join, resolve } from 'path'
 import { findMangaChapters, findMangaVolumes } from './mangadex-api-data'
 import { mangadexUploadClient } from './mangadex-clients'
@@ -25,7 +31,10 @@ function createDestinationFolder(): void {
   if (!existsSync(folderPath)) mkdirSync(folderPath, { recursive: true })
 }
 
-export async function mangaDownload(mangaId: string, mangaName: string): Promise<void> {
+export async function mangaDownload(
+  mangaId: string,
+  mangaName: string
+): Promise<void> {
   createDestinationFolder()
 
   const volumes = await findMangaVolumes(mangaId)
@@ -33,7 +42,9 @@ export async function mangaDownload(mangaId: string, mangaName: string): Promise
   console.log('🟢 \x1b[32mDOWNLOADING VOLUMES\x1b[0m')
   for (const volume of volumes) {
     console.log('\x1b[37m-------------------------\x1b[0m')
-    console.log(`🔹 \x1b[36mVol. ${volume.volume}\x1b[0m - \x1b[33m${volume.chapters.length} chapters\x1b[0m`)
+    console.log(
+      `🔹 \x1b[36mVol. ${volume.volume}\x1b[0m - \x1b[33m${volume.chapters.length} chapters\x1b[0m`
+    )
 
     const chaptersImagesPath: string[] = []
 
@@ -42,13 +53,11 @@ export async function mangaDownload(mangaId: string, mangaName: string): Promise
       const chapterData = await findMangaChapters(chapter.id)
 
       // TODO - add verification of exceptions
-      chaptersImagesPath.push(...await downloadChapter(chapterData))
+      chaptersImagesPath.push(...(await downloadChapter(chapterData)))
     }
 
     showLogs && console.log('Total pages: ', chaptersImagesPath.length)
-    const notDownloaded = chaptersImagesPath.filter(
-      (path) => !existsSync(path)
-    )
+    const notDownloaded = chaptersImagesPath.filter((path) => !existsSync(path))
     showLogs && console.log('Not downloaded: ', notDownloaded.length)
 
     await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
@@ -78,7 +87,8 @@ async function downloadChapter(chapterData: Chapter): Promise<string[]> {
     })
   )
 
-  for (const image of responses) { // save images
+  for (const image of responses) {
+    // save images
     writeFileSync(image.path, image.response.data)
   }
 
@@ -86,14 +96,17 @@ async function downloadChapter(chapterData: Chapter): Promise<string[]> {
 }
 
 async function findImage(url: string): Promise<AxiosResponse<Buffer, any>> {
-  return await retry(async () => await mangadexUploadClient(url), {
+  return retry(async () => await mangadexUploadClient(url), {
     delay: 200,
     factor: 2,
     maxAttempts: 10,
     handleError: (_, ctx) => {
-      showLogs && console.log(
-        `im erroring bro :( (${ctx.attemptNum} attempts, ${ctx.attemptsRemaining} remaining)`
-      )
+      showLogs &&
+        console.log(
+          `im erroring bro :( (${String(ctx.attemptNum)} attempts, ${String(
+            ctx.attemptsRemaining
+          )} remaining)`
+        )
     }
   })
 }
@@ -121,13 +134,16 @@ async function createChapterPDF(
       showLogs && console.log(`Adding page ${imagePath}`)
       const dimensions = sizeOf(imagePath)
 
-      if (!dimensions.width || !dimensions.height) throw new Error('Image dimensions not found')
+      if (!dimensions.width || !dimensions.height) {
+        throw new Error('Image dimensions not found')
+      }
 
       mangaPDF
         .addPage({
           size: [dimensions.width, dimensions.height],
           margin: 0
-        }).image(imagePath, 0, 0, {
+        })
+        .image(imagePath, 0, 0, {
           fit: [dimensions.width, dimensions.height],
           align: 'center',
           valign: 'center'
