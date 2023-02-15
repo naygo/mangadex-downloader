@@ -1,5 +1,10 @@
-import type { MangadexApiReponse, Manga } from '../models/interfaces'
 import { mangadexClient } from './mangadex-clients'
+
+import type { MangadexApiReponse, Manga } from '../models/interfaces'
+import type { MangadexAggregate } from '../models/interfaces/aggregate'
+import type { Volume } from '../models/interfaces/volume'
+import { formatVolumes } from '../utils/format-volumes'
+import type { Chapter, MangadexChapter } from '../models/interfaces/chapter'
 
 export async function findMangaByTitle(
   title: string,
@@ -28,4 +33,26 @@ export async function findMangaById(
     await mangadexClient.get(`/manga/${id}`)
 
   return response.data
+}
+
+export async function findMangaVolumes(mangaId: string): Promise<Volume[]> {
+  const response = await mangadexClient.get<MangadexAggregate>(
+    `/manga/${mangaId}/aggregate?translatedLanguage[]=pt-br`,
+    {}
+  )
+
+  return formatVolumes(response.data.volumes)
+}
+
+export async function findMangaChapters(chapterId: string): Promise<Chapter> {
+  const response: MangadexApiReponse<MangadexChapter> =
+    await mangadexClient.get(`/at-home/server/${chapterId}`)
+
+  return {
+    id: chapterId,
+    host: response.data.baseUrl,
+    chapterHash: response.data.chapter.hash,
+    data: response.data.chapter.data,
+    dataSaver: response.data.chapter.dataSaver
+  }
 }
