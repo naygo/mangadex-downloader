@@ -1,43 +1,62 @@
-import axios from 'axios'
-import * as http from 'http'
+import type { Manga, MangadexApiReponse } from '@/models/interfaces'
 
-import { type Manga, type MangadexApiReponse } from '../models/interfaces'
+export function formatChoicesToPrompt(
+  mangaListResponse: MangadexApiReponse<Manga[]>
+): { currentPage: number; totalPages: number; choices: string[] } {
+  const { offset = 0, data, total = 0 } = mangaListResponse
 
-const mangadexClient = axios.create({
-  baseURL: 'https://api.mangadex.org',
-  httpAgent: new http.Agent({ keepAlive: true })
-})
+  const currentPage = offset / 10
+  const totalPages = Math.ceil(total / 10)
 
-const mangadexUploadClient = axios.create({
-  baseURL: 'http://uploads.mangadex.org',
-  responseType: 'arraybuffer',
-  timeout: 30000,
-  headers: {
-    Connection: 'Keep-Alive'
+  const mangaTitles = new Set(
+    data
+      .map(({ attributes }) => attributes.title?.en || attributes.title?.ja)
+      .filter(Boolean)
+  )
+
+  const hasPreviousPage = offset > 0
+  const hasNextPage = currentPage + 1 < totalPages
+
+  const choices = [
+    ...mangaTitles,
+    hasPreviousPage ? 'Previous page' : '',
+    hasNextPage ? 'Next page' : ''
+  ].filter(Boolean) // Remove possible falsy values
+
+  return {
+    currentPage,
+    totalPages,
+    choices
   }
-})
-
-export async function findMangaByTitle(
-  title: string,
-  page?: number
-): Promise<MangadexApiReponse<Manga[]>> {
-  const response: { data: MangadexApiReponse<Manga[]> } =
-    await mangadexClient.get('/manga', {
-      params: {
-        title,
-        offset: page,
-        'order[relevance]': 'desc'
-      }
-    })
-
-  return response.data
 }
 
-export async function findMangaById(
-  id: string
-): Promise<MangadexApiReponse<Manga>> {
-  const response: { data: MangadexApiReponse<Manga> } =
-    await mangadexClient.get(`/manga/${id}`)
+export function findSelectedMangaInfo(
+  mangaList: MangadexApiReponse<Manga[]>,
+  choice: string
+): Manga | null {
+  return (
+    mangaList.data.find(
+      (manga) =>
+        manga.attributes.title.en === choice ||
+        manga.attributes.title.ja === choice
+    ) ?? null
+  )
+}
 
-  return response.data
+export function showMangaInfo(manga: Manga): void {
+  const { title, tags, publicationDemographic, status, year } = manga.attributes
+  const author = manga.relationships.find(
+    (relationship) => relationship.type === 'author'
+  )
+  const authorName: string = author?.attributes?.name ?? 'Unknown'
+  const formattedTags = tags.map((tag) => tag.attributes.name.en).join(', ')
+
+  console.clear()
+
+  console.log(`Title: \x1b[33m${title.en || title.ja}\x1b[0m`)
+  console.log(`Author: \x1b[33m${authorName}\x1b[0m`)
+  console.log(`Release Date: \x1b[33m${year}\x1b[0m`)
+  console.log(`Status: \x1b[33m${status}\x1b[0m`)
+  console.log(`Demographic: \x1b[33m${publicationDemographic}\x1b[0m`)
+  console.log(`Tags: \x1b[36m${formattedTags}\x1b[0m`)
 }

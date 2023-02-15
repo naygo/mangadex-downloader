@@ -34,7 +34,9 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "@lifeomic/attempt": "^3.0.3",
     "axios": "^1.3.2",
+    "dotenv": "^16.0.3",
     "enquirer": "^2.3.6",
     "image-size": "^1.0.2",
     "pdfkit": "^0.13.0"
