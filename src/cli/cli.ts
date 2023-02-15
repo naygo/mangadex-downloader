@@ -5,7 +5,11 @@ import type {
   MangadexApiReponse,
   MangaSearchMethod
 } from '../models/interfaces'
-import { findSelectedMangaInfo, formatChoicesToPrompt } from '../utils/mangadex'
+import {
+  findSelectedMangaInfo,
+  formatChoicesToPrompt,
+  showMangaInfo
+} from '../utils/mangadex'
 
 import { mangaSearchMethodOptions } from './options'
 
@@ -13,7 +17,9 @@ export async function cli(): Promise<void> {
   const searchMethod = await getSearchMethod()
   const mangaNameOrId = await getMangaNameOrId(searchMethod)
 
-  await findManga(mangaNameOrId)
+  const selectedManga = await findManga(mangaNameOrId)
+
+  showMangaInfo(selectedManga)
 }
 
 async function getSearchMethod(): Promise<MangaSearchMethod> {
@@ -39,7 +45,7 @@ async function getMangaNameOrId(
   return manga
 }
 
-async function findManga(mangaNameOrId: string): Promise<void> {
+async function findManga(mangaNameOrId: string): Promise<Manga> {
   const isUuid = mangaNameOrId.match(
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
   )
@@ -53,7 +59,7 @@ async function findManga(mangaNameOrId: string): Promise<void> {
     mangaInfo = await getSelectedMangaInfo(mangaListResponse, mangaNameOrId)
   }
 
-  console.log(mangaInfo.id)
+  return mangaInfo
 }
 
 export async function getSelectedMangaInfo(

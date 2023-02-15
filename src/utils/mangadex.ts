@@ -42,3 +42,19 @@ export function findSelectedMangaInfo(
     ) ?? null
   )
 }
+
+export function showMangaInfo(manga: Manga): void {
+  const { title, tags, publicationDemographic, status, year } = manga.attributes
+  const author = manga.relationships.find(
+    (relationship) => relationship.type === 'author'
+  )
+  const authorName = author?.attributes?.name ?? 'Unknown'
+  const formattedTags = tags.map((tag) => tag.attributes.name.en).join(', ')
+
+  console.log(`Title: \x1b[33m${title.en || title.ja}\x1b[0m`)
+  console.log(`Author: \x1b[33m${authorName}\x1b[0m`)
+  console.log(`Release Date: \x1b[33m${year}\x1b[0m`)
+  console.log(`Status: \x1b[33m${status}\x1b[0m`)
+  console.log(`Demographic: \x1b[33m${publicationDemographic}\x1b[0m`)
+  console.log(`Tags: \x1b[36m${formattedTags}\x1b[0m`)
+}

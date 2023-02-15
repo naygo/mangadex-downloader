@@ -13,7 +13,8 @@ export async function findMangaByTitle(
       params: {
         title,
         offset,
-        'order[relevance]': 'desc'
+        'order[relevance]': 'desc',
+        'includes[]': 'author'
       }
     })
 

@@ -79,4 +79,7 @@ export interface Relationship {
   id: string
   type: string
   related?: string
+  attributes?: {
+    name: string
+  }
 }
