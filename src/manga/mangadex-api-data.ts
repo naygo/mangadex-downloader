@@ -1,6 +1,10 @@
+
 import { mangadexClient } from './mangadex-clients'
 
-import type { MangadexApiReponse, Manga } from '../models/interfaces'
+import type {
+  MangadexApiReponse, Manga, MangaDexResponse,
+  Cover
+} from '../models/interfaces'
 import type { MangadexAggregate } from '../models/interfaces/aggregate'
 import type { Volume } from '../models/interfaces/volume'
 import { formatVolumes } from '../utils/format-volumes'
@@ -30,7 +34,26 @@ export async function findMangaById(
   id: string
 ): Promise<MangadexApiReponse<Manga>> {
   const response: { data: MangadexApiReponse<Manga> } =
-    await mangadexClient.get(`/manga/${id}`)
+    await mangadexClient.get(`/manga/${id}`, {
+      params: {
+        'includes[]': 'author'
+      }
+    })
+
+  return response.data
+}
+
+export async function getMangaCovers(
+  mangaId: string
+): Promise<MangadexApiReponse<MangaDexResponse<Cover>>> {
+  const response: { data: MangadexApiReponse<MangaDexResponse<Cover>> } =
+    await mangadexClient.get('/cover', {
+      params: {
+        limit: 100,
+        'manga[]': mangaId,
+        'order[volume]': 'asc'
+      }
+    })
 
   return response.data
 }
