@@ -1,7 +1,9 @@
+import { cli } from './cli'
 import { downloadManga } from './download-manga'
 import { getUserManga } from './manga-info'
 
 const main = async (): Promise<void> => {
+  /*
   const mangaInfo = await getUserManga()
   console.log(mangaInfo)
 
@@ -14,6 +16,10 @@ const main = async (): Promise<void> => {
   downloadManga(mangaInfo.id)
   // TODO - images to pdf
   // TODO - pdf to MOBI
+  */
+
+  // Refactoring
+  await cli()
 }
 
 void main()

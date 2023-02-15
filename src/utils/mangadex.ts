@@ -1,43 +1,26 @@
-import axios from 'axios'
-import * as http from 'http'
+import type { Manga, MangadexApiReponse } from '../models/interfaces'
 
-import { type Manga, type MangadexApiReponse } from '../models/interfaces'
+export function formatChoicesToPrompt(
+  mangaListResponse: MangadexApiReponse<Manga[]>
+): { page: number; total: number; choices: string[] } {
+  const { offset = 0, total } = mangaListResponse
+  const page = offset != null ? offset : 0
 
-const mangadexClient = axios.create({
-  baseURL: 'https://api.mangadex.org',
-  httpAgent: new http.Agent({ keepAlive: true })
-})
+  const mangaList = mangaListResponse.data
 
-const mangadexUploadClient = axios.create({
-  baseURL: 'http://uploads.mangadex.org',
-  responseType: 'arraybuffer',
-  timeout: 30000,
-  headers: {
-    Connection: 'Keep-Alive'
+  const mangaTitles = mangaList
+    .map((manga) => manga.attributes.title.en || manga.attributes.title.ja)
+    .filter((title) => title != null)
+
+  const choices = [
+    ...mangaTitles,
+    ...(total > 10 && offset > 0 ? ['Previous page'] : []),
+    ...(total > 10 && offset < total ? ['Next page'] : [])
+  ]
+
+  return {
+    page,
+    total,
+    choices
   }
-})
-
-export async function findMangaByTitle(
-  title: string,
-  page?: number
-): Promise<MangadexApiReponse<Manga[]>> {
-  const response: { data: MangadexApiReponse<Manga[]> } =
-    await mangadexClient.get('/manga', {
-      params: {
-        title,
-        offset: page,
-        'order[relevance]': 'desc'
-      }
-    })
-
-  return response.data
-}
-
-export async function findMangaById(
-  id: string
-): Promise<MangadexApiReponse<Manga>> {
-  const response: { data: MangadexApiReponse<Manga> } =
-    await mangadexClient.get(`/manga/${id}`)
-
-  return response.data
 }

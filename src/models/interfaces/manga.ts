@@ -1,3 +1,5 @@
+export type MangaSearchMethod = 'name' | 'id'
+
 export interface Manga {
   id: string
   type: string
