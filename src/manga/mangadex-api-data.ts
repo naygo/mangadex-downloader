@@ -1,8 +1,9 @@
-
-import { mangadexClient } from './mangadex-clients'
+import { mangadexClient, mangadexUploadClient } from './mangadex-clients'
 
 import type {
-  MangadexApiReponse, Manga, MangaDexResponse,
+  MangadexApiReponse,
+  Manga,
+  MangaDexResponse,
   Cover
 } from '../models/interfaces'
 import type { MangadexAggregate } from '../models/interfaces/aggregate'
@@ -56,6 +57,20 @@ export async function getMangaCovers(
         'order[volume]': 'asc'
       }
     })
+
+  return response.data
+}
+
+export async function getMangaVolumeCoverBuffer(
+  mangaId: string,
+  filename: string
+): Promise<Buffer> {
+  const response = await mangadexUploadClient.get(
+    `/covers/${mangaId}/${filename}`,
+    {
+      responseType: 'arraybuffer'
+    }
+  )
 
   return response.data
 }

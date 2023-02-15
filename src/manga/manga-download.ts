@@ -1,6 +1,7 @@
 import 'dotenv/config'
 
-import type { Chapter } from '@/models/interfaces/chapter'
+import type { Cover, Chapter } from '@/models/interfaces'
+import { getAllMangaCovers } from '@/utils/mangadex'
 import { retry } from '@lifeomic/attempt'
 import { type AxiosResponse } from 'axios'
 import {
@@ -13,7 +14,11 @@ import {
 import sizeOf from 'image-size'
 import { join, resolve } from 'path'
 import PDFDocument from 'pdfkit'
-import { findMangaChapters, findMangaVolumes } from './mangadex-api-data'
+import {
+  findMangaChapters,
+  findMangaVolumes,
+  getMangaVolumeCoverBuffer
+} from './mangadex-api-data'
 import { mangadexUploadClient } from './mangadex-clients'
 
 interface DownloadImagesResponse {
@@ -37,6 +42,7 @@ export async function mangaDownload(
   createDestinationFolder()
 
   const volumes = await findMangaVolumes(mangaId)
+  const covers = await getAllMangaCovers(mangaId)
 
   console.log('🟢 \x1b[32mDOWNLOADING VOLUMES\x1b[0m')
   for (const volume of volumes) {
@@ -46,6 +52,16 @@ export async function mangaDownload(
     )
 
     const chaptersImagesPath: string[] = []
+    const volumeCover = getVolumeCover(covers, volume.volume)
+
+    if (volumeCover) {
+      const coverPath = await downloadAndSaveCover(
+        mangaId,
+        volumeCover?.fileName
+      )
+
+      chaptersImagesPath.push(coverPath)
+    }
 
     for (const chapter of volume.chapters) {
       showLogs && console.log('Downloading chapter: ', chapter.chapter)
@@ -64,6 +80,25 @@ export async function mangaDownload(
   }
 
   showLogs && console.log('Done! :D')
+}
+
+function getVolumeCover(covers: Cover[], volume: string): Cover | undefined {
+  return covers.find((cover) => cover.volume === volume)
+}
+
+async function downloadAndSaveCover(
+  mangaId: string,
+  fileName: string
+): Promise<string> {
+  if (!folderPath) throw new Error('Destination folder not found')
+
+  const imageBuffer = await getMangaVolumeCoverBuffer(mangaId, fileName)
+
+  const coverPath = join(folderPath, `${mangaId}-cover.jpg`)
+
+  writeFileSync(coverPath, imageBuffer)
+
+  return coverPath
 }
 
 async function downloadChapter(chapterData: Chapter): Promise<string[]> {

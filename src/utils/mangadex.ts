@@ -79,10 +79,6 @@ export async function getAllMangaCovers(mangaId: string): Promise<Cover[]> {
 
       if (attributes.volume === null) continue
 
-      const { volume } = attributes
-
-      if (volume.includes('.')) continue
-
       covers.push(attributes)
     }
 

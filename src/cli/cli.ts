@@ -10,7 +10,6 @@ import type {
 import {
   findSelectedMangaInfo,
   formatChoicesToPrompt,
-  getAllMangaCovers,
   showMangaInfo
 } from '@/utils/mangadex'
 import { mangaSearchMethodOptions } from './options'
@@ -50,7 +49,6 @@ export async function cli(): Promise<void> {
   console.clear()
 
   await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en)
-  await getAllMangaCovers(mangaInfo.id)
 }
 
 async function getSearchMethod(): Promise<MangaSearchMethod> {
