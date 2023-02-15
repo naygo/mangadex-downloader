@@ -9,6 +9,7 @@ import type {
 } from '../models/interfaces'
 import { mangaSearchMethodOptions } from './options'
 import { findSelectedMangaInfo, formatChoicesToPrompt } from '../utils/mangadex'
+import { mangaDownload } from '../manga/manga-download'
 
 export async function cli(): Promise<void> {
   let continueSearch = true
@@ -28,8 +29,8 @@ export async function cli(): Promise<void> {
         continueSearch = false
         break
       case ConfirmMangaSelectionEnum.CONFIRM_DOWNLOAD:
-        // TODO: Download manga
         console.log('Downloading manga...')
+        await mangaDownload(selectedManga.id, selectedManga.attributes.title.en)
         continueSearch = false
         break
       case ConfirmMangaSelectionEnum.SEARCH_AGAIN:
