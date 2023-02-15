@@ -1,25 +1,43 @@
 import { prompt } from 'enquirer'
+
 import { findMangaById, findMangaByTitle } from '../manga'
+import { ConfirmMangaSelectionEnum } from '../models/enums'
 import type {
   Manga,
   MangadexApiReponse,
   MangaSearchMethod
 } from '../models/interfaces'
-import {
-  findSelectedMangaInfo,
-  formatChoicesToPrompt,
-  showMangaInfo
-} from '../utils/mangadex'
-
 import { mangaSearchMethodOptions } from './options'
+import { findSelectedMangaInfo, formatChoicesToPrompt } from '../utils/mangadex'
 
 export async function cli(): Promise<void> {
-  const searchMethod = await getSearchMethod()
-  const mangaNameOrId = await getMangaNameOrId(searchMethod)
+  let continueSearch = true
 
-  const selectedManga = await findManga(mangaNameOrId)
+  while (continueSearch) {
+    const searchMethod = await getSearchMethod()
+    const mangaNameOrId = await getMangaNameOrId(searchMethod)
 
-  showMangaInfo(selectedManga)
+    const selectedManga = await findManga(mangaNameOrId)
+
+    const nextStep = await confirmMangaSelection(selectedManga.id)
+
+    switch (nextStep) {
+      case ConfirmMangaSelectionEnum.CANCEL:
+        // TODO: Go back to manga page
+        console.log('Cancelling...')
+        continueSearch = false
+        break
+      case ConfirmMangaSelectionEnum.CONFIRM_DOWNLOAD:
+        // TODO: Download manga
+        console.log('Downloading manga...')
+        continueSearch = false
+        break
+      case ConfirmMangaSelectionEnum.SEARCH_AGAIN:
+        break
+      default:
+        break
+    }
+  }
 }
 
 async function getSearchMethod(): Promise<MangaSearchMethod> {
@@ -62,7 +80,7 @@ async function findManga(mangaNameOrId: string): Promise<Manga> {
   return mangaInfo
 }
 
-export async function getSelectedMangaInfo(
+async function getSelectedMangaInfo(
   mangaListResponse: MangadexApiReponse<Manga[]>,
   mangaTitle: string
 ): Promise<Manga> {
@@ -113,4 +131,21 @@ async function promptMangaChoices(
     message: `Mangas found: Page ${currentPage + 1} of ${totalPages}`,
     choices
   })
+}
+
+async function confirmMangaSelection(
+  mangaId: string
+): Promise<ConfirmMangaSelectionEnum> {
+  const { confirm }: { confirm: ConfirmMangaSelectionEnum } = await prompt({
+    type: 'select',
+    name: 'confirm',
+    message: 'Do you want to download this manga?',
+    choices: [
+      ConfirmMangaSelectionEnum.CONFIRM_DOWNLOAD,
+      ConfirmMangaSelectionEnum.SEARCH_AGAIN,
+      ConfirmMangaSelectionEnum.CANCEL
+    ]
+  })
+
+  return confirm
 }
