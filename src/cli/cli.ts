@@ -13,6 +13,7 @@ import {
   showMangaInfo
 } from '@/utils/mangadex'
 import { mangaSearchMethodOptions } from './options'
+import { mangaDownload } from '@/manga/manga-download'
 
 export async function cli(): Promise<void> {
   console.clear()
@@ -43,8 +44,9 @@ export async function cli(): Promise<void> {
     }
   }
 
-  // TODO: Download manga
   if (!mangaInfo) throw new Error('Manga info is undefined')
+
+  await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en)
 
   const covers = await getMangaCovers(mangaInfo.id)
 
