@@ -30,7 +30,11 @@ export async function findMangaById(
   id: string
 ): Promise<MangadexApiReponse<Manga>> {
   const response: { data: MangadexApiReponse<Manga> } =
-    await mangadexClient.get(`/manga/${id}`)
+    await mangadexClient.get(`/manga/${id}`, {
+      params: {
+        'includes[]': 'author'
+      }
+    })
 
   return response.data
 }
