@@ -18,6 +18,7 @@ interface DownloadImagesResponse {
 }
 
 const folderPath = process.env.DOWNLOAD_FOLDER
+const showLogs = process.env.SHOW_LOGS === 'true'
 
 function createDestinationFolder(): void {
   if (!folderPath) throw new Error('Destination folder not found')
@@ -29,31 +30,32 @@ export async function mangaDownload(mangaId: string, mangaName: string): Promise
 
   const volumes = await findMangaVolumes(mangaId)
 
+  console.log('🟢 \x1b[32mDOWNLOADING VOLUMES\x1b[0m')
   for (const volume of volumes) {
-    console.log('-------------------------')
-    console.log('Downloading volume: ', volume.volume)
+    console.log('\x1b[37m-------------------------\x1b[0m')
+    console.log(`🔹 \x1b[36mVol. ${volume.volume}\x1b[0m - \x1b[33m${volume.chapters.length} chapters\x1b[0m`)
 
     const chaptersImagesPath: string[] = []
 
     for (const chapter of volume.chapters) {
-      console.log('Downloading chapter: ', chapter.chapter)
+      showLogs && console.log('Downloading chapter: ', chapter.chapter)
       const chapterData = await findMangaChapters(chapter.id)
 
       // TODO - add verification of exceptions
       chaptersImagesPath.push(...await downloadChapter(chapterData))
     }
 
-    console.log('Total pages: ', chaptersImagesPath.length)
+    showLogs && console.log('Total pages: ', chaptersImagesPath.length)
     const notDownloaded = chaptersImagesPath.filter(
       (path) => !existsSync(path)
     )
-    console.log('Not downloaded: ', notDownloaded.length)
+    showLogs && console.log('Not downloaded: ', notDownloaded.length)
 
     await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
-    console.log('-------------------------')
+    console.log(`✅ \x1b[32mVolume ${volume.volume} downloaded!\x1b[0m`)
   }
 
-  console.log('Done! :D')
+  showLogs && console.log('Done! :D')
 }
 
 async function downloadChapter(chapterData: Chapter): Promise<string[]> {
@@ -64,7 +66,7 @@ async function downloadChapter(chapterData: Chapter): Promise<string[]> {
 
   const responses: DownloadImagesResponse[] = await Promise.all(
     data.map(async (page) => {
-      console.log(`Downloading ${page}`)
+      showLogs && console.log(`Downloading ${page}`)
       const pageUrl = `data/${chapterHash}/${page}`
       const pagePath = join(folderPath, `${id}-${page}`)
       chapterImagesPath.push(pagePath)
@@ -89,7 +91,7 @@ async function findImage(url: string): Promise<AxiosResponse<Buffer, any>> {
     factor: 2,
     maxAttempts: 10,
     handleError: (_, ctx) => {
-      console.log(
+      showLogs && console.log(
         `im erroring bro :( (${ctx.attemptNum} attempts, ${ctx.attemptsRemaining} remaining)`
       )
     }
@@ -104,7 +106,7 @@ async function createChapterPDF(
   try {
     if (!folderPath) throw new Error('Destination folder not found')
 
-    console.log('Creating PDF')
+    console.log('📃 Creating PDF...')
 
     const mangaPDF = new PDFDocument({
       autoFirstPage: false,
@@ -116,7 +118,7 @@ async function createChapterPDF(
     mangaPDF.pipe(createWriteStream(filePath))
 
     for (const imagePath of chaptersImagesPath) {
-      console.log(`Adding page ${imagePath}`)
+      showLogs && console.log(`Adding page ${imagePath}`)
       const dimensions = sizeOf(imagePath)
 
       if (!dimensions.width || !dimensions.height) throw new Error('Image dimensions not found')
@@ -137,6 +139,6 @@ async function createChapterPDF(
     }
     mangaPDF.end()
   } catch (error) {
-    console.log(error)
+    showLogs && console.log(error)
   }
 }
