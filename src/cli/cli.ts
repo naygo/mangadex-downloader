@@ -1,6 +1,6 @@
 import { prompt } from 'enquirer'
 
-import { findMangaById, findMangaByTitle } from '@/manga'
+import { findMangaById, findMangaByTitle, getMangaCovers } from '@/manga'
 import { ConfirmMangaSelectionEnum } from '@/models/enums'
 import type {
   Manga,
@@ -18,7 +18,7 @@ export async function cli(): Promise<void> {
   console.clear()
 
   let continueSearch = true
-  let downloadManga = false
+  let mangaInfo: Manga | null = null
 
   while (continueSearch) {
     const searchMethod = await getSearchMethod()
@@ -27,7 +27,6 @@ export async function cli(): Promise<void> {
     let mangaConfirmed = false
 
     let currentPage = 0
-    let mangaInfo: Manga
 
     while (!mangaConfirmed) {
       const mangaSearchResult = await findManga(mangaNameOrId, currentPage)
@@ -41,15 +40,15 @@ export async function cli(): Promise<void> {
 
       mangaConfirmed = mangaSelectionConfirmation.mangaConfirmed
       continueSearch = mangaSelectionConfirmation.continueSearch
-
-      downloadManga = mangaConfirmed && !continueSearch
     }
   }
 
-  if (downloadManga) {
-    // TODO: Download manga
-    console.log('Download manga')
-  }
+  // TODO: Download manga
+  if (!mangaInfo) throw new Error('Manga info is undefined')
+
+  const covers = await getMangaCovers(mangaInfo.id)
+
+  console.log(covers)
 }
 
 async function getSearchMethod(): Promise<MangaSearchMethod> {
