@@ -1,11 +1,11 @@
 import type { Manga } from './models/interfaces/manga'
 
-import { showMangaInfo } from './utils/show-manga-info'
 import { readUserManga } from './read-user-manga'
 import { ChoiceEnum } from './models/enums/choice'
 import { getSelectedMangaInfo } from './list-mangas'
 import { prompt } from 'enquirer'
-import { findMangaById, findMangaByTitle } from './utils/mangadex'
+import { findMangaById, findMangaByTitle } from './manga/mangadex-api-data'
+import { showMangaInfo } from './utils/mangadex'
 
 export async function getUserManga(): Promise<Manga | null> {
   try {
