@@ -8,9 +8,15 @@ import type {
   MangaSearchMethod
 } from '../models/interfaces'
 import { mangaSearchMethodOptions } from './options'
-import { findSelectedMangaInfo, formatChoicesToPrompt } from '../utils/mangadex'
+import {
+  findSelectedMangaInfo,
+  formatChoicesToPrompt,
+  showMangaInfo
+} from '../utils/mangadex'
 
 export async function cli(): Promise<void> {
+  console.clear()
+
   let continueSearch = true
   let downloadManga = false
 
@@ -21,13 +27,15 @@ export async function cli(): Promise<void> {
     let mangaConfirmed = false
 
     let currentPage = 0
-    // let mangaInfo: Manga
+    let mangaInfo: Manga
 
     while (!mangaConfirmed) {
       const mangaSearchResult = await findManga(mangaNameOrId, currentPage)
 
-      // mangaInfo = mangaSearchResult.mangaInfo
       currentPage = mangaSearchResult.currentPage
+      mangaInfo = mangaSearchResult.mangaInfo
+
+      showMangaInfo(mangaInfo)
 
       const mangaSelectionConfirmation = await confirmMangaSelection()
 
@@ -45,6 +53,8 @@ export async function cli(): Promise<void> {
 }
 
 async function getSearchMethod(): Promise<MangaSearchMethod> {
+  console.clear()
+
   const { choice } = await prompt<{ choice: MangaSearchMethod }>({
     type: 'select',
     name: 'choice',
@@ -110,6 +120,7 @@ async function getSelectedMangaInfo(
       formatChoicesToPrompt(mangaList)
 
     const { choice: selectedChoice } = await promptMangaChoices(
+      mangaTitle,
       choices,
       currentPage,
       totalPages
@@ -125,8 +136,6 @@ async function getSelectedMangaInfo(
       choice = selectedChoice
       hasNextOrPrevPage = false
     }
-
-    console.clear()
   }
 
   const mangaInfo = findSelectedMangaInfo(mangaList, choice)
@@ -137,10 +146,14 @@ async function getSelectedMangaInfo(
 }
 
 async function promptMangaChoices(
+  mangaTitle: string,
   choices: string[],
   currentPage: number,
   totalPages: number
 ): Promise<{ choice: string }> {
+  console.clear()
+  console.log(`Entered title: \x1b[33m${mangaTitle}\x1b[0m`)
+
   return await prompt<{ choice: string }>({
     type: 'select',
     name: 'choice',
