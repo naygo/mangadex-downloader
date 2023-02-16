@@ -8,11 +8,12 @@ import {
   createWriteStream,
   existsSync,
   mkdirSync,
+  readFileSync,
   unlink,
   writeFileSync
 } from 'fs'
 import sizeOf from 'image-size'
-import { join, resolve } from 'path'
+import { basename, join, resolve } from 'path'
 import PDFDocument from 'pdfkit'
 import {
   findMangaChapters,
@@ -20,6 +21,8 @@ import {
   getMangaVolumeCoverBuffer
 } from './mangadex-api-data'
 import { mangadexUploadClient } from './mangadex-clients'
+import JSZip from 'jszip'
+import { StoreConfigMangaEnum } from '@/models/enums'
 
 interface DownloadImagesResponse {
   path: string
@@ -27,24 +30,31 @@ interface DownloadImagesResponse {
   response: AxiosResponse<Buffer, any>
 }
 
-const folderPath = process.env.DOWNLOAD_FOLDER
+let folderPath = ''
 const showLogs = process.env.SHOW_LOGS === 'true'
 
-function createDestinationFolder(): void {
-  if (!folderPath) throw new Error('Destination folder not found')
-  if (!existsSync(folderPath)) mkdirSync(folderPath, { recursive: true })
+function createDestinationFolder(mangaName: string): void {
+  const dirPath = process.env.DOWNLOAD_FOLDER as string
+  if (!dirPath) throw new Error('DOWNLOAD_FOLDER is not defined in .env file')
+
+  const newFolderPath = join(dirPath, mangaName)
+  if (!existsSync(newFolderPath)) mkdirSync(newFolderPath, { recursive: true })
+  folderPath = resolve(newFolderPath)
 }
 
 export async function mangaDownload(
   mangaId: string,
-  mangaName: string
+  mangaName: string,
+  storeConfig: StoreConfigMangaEnum
 ): Promise<void> {
-  createDestinationFolder()
+  createDestinationFolder(mangaName)
 
   const volumes = await findMangaVolumes(mangaId)
   const covers = await getAllMangaCovers(mangaId)
+  const volumesPath: string[] = []
 
-  console.log('🟢 \x1b[32mDOWNLOADING VOLUMES\x1b[0m')
+  console.log(`🟢 \x1b[32mDOWNLOADING ${volumes.length} VOLUMES\x1b[0m`)
+
   for (const volume of volumes) {
     console.log('\x1b[37m-------------------------\x1b[0m')
     console.log(
@@ -75,9 +85,14 @@ export async function mangaDownload(
     const notDownloaded = chaptersImagesPath.filter((path) => !existsSync(path))
     showLogs && console.log('Not downloaded: ', notDownloaded.length)
 
-    await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
+    const volumePath = await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
+    volumesPath.push(volumePath)
+
     console.log(`✅ \x1b[32mVolume ${volume.volume} downloaded!\x1b[0m`)
   }
+
+  await new Promise((resolve) => setTimeout(resolve, 2000)) // wait 5 seconds to finish all downloads
+  storeConfig === StoreConfigMangaEnum.PDF && await generateZip(mangaName, volumesPath)
 
   showLogs && console.log('Done! :D')
 }
@@ -90,8 +105,6 @@ async function downloadAndSaveCover(
   mangaId: string,
   fileName: string
 ): Promise<string> {
-  if (!folderPath) throw new Error('Destination folder not found')
-
   const imageBuffer = await getMangaVolumeCoverBuffer(mangaId, fileName)
 
   const coverPath = join(folderPath, `${mangaId}-cover.jpg`)
@@ -102,8 +115,6 @@ async function downloadAndSaveCover(
 }
 
 async function downloadChapter(chapterData: Chapter): Promise<string[]> {
-  if (!folderPath) throw new Error('Destination folder not found')
-
   const { id, data, chapterHash } = chapterData
   const chapterImagesPath: string[] = []
 
@@ -130,7 +141,7 @@ async function downloadChapter(chapterData: Chapter): Promise<string[]> {
 }
 
 async function findImage(url: string): Promise<AxiosResponse<Buffer, any>> {
-  return retry(async () => await mangadexUploadClient(url), {
+  return await retry(async () => await mangadexUploadClient(url), {
     delay: 200,
     factor: 2,
     maxAttempts: 10,
@@ -149,46 +160,65 @@ async function createChapterPDF(
   chaptersImagesPath: string[],
   mangaName: string,
   volume: string
-): Promise<void> {
-  try {
-    if (!folderPath) throw new Error('Destination folder not found')
+): Promise<string> {
+  console.log('📃 Creating PDF...')
 
-    console.log('📃 Creating PDF...')
+  const mangaPDF = new PDFDocument({
+    autoFirstPage: false,
+    compress: true
+  })
 
-    const mangaPDF = new PDFDocument({
-      autoFirstPage: false,
-      compress: true
-    })
+  const fileName = `${mangaName} - Vol. ${volume}.pdf`
+  const filePath = resolve(folderPath, fileName)
+  mangaPDF.pipe(createWriteStream(filePath))
 
-    const fileName = `${mangaName} - Vol. ${volume}.pdf`
-    const filePath = resolve(folderPath, fileName)
-    mangaPDF.pipe(createWriteStream(filePath))
+  for (const imagePath of chaptersImagesPath) {
+    showLogs && console.log(`Adding page ${imagePath}`)
+    const dimensions = sizeOf(imagePath)
 
-    for (const imagePath of chaptersImagesPath) {
-      showLogs && console.log(`Adding page ${imagePath}`)
-      const dimensions = sizeOf(imagePath)
-
-      if (!dimensions.width || !dimensions.height) {
-        throw new Error('Image dimensions not found')
-      }
-
-      mangaPDF
-        .addPage({
-          size: [dimensions.width, dimensions.height],
-          margin: 0
-        })
-        .image(imagePath, 0, 0, {
-          fit: [dimensions.width, dimensions.height],
-          align: 'center',
-          valign: 'center'
-        })
-
-      unlink(imagePath, (err) => {
-        if (err) throw err
-      })
+    if (!dimensions.width || !dimensions.height) {
+      throw new Error('Image dimensions not found')
     }
-    mangaPDF.end()
-  } catch (error) {
-    showLogs && console.log(error)
+
+    mangaPDF
+      .addPage({
+        size: [dimensions.width, dimensions.height],
+        margin: 0
+      })
+      .image(imagePath, 0, 0, {
+        fit: [dimensions.width, dimensions.height],
+        align: 'center',
+        valign: 'center'
+      })
+
+    unlink(imagePath, (err) => {
+      if (err) throw err
+    })
   }
+
+  mangaPDF.end()
+  return filePath
+}
+
+async function generateZip(mangaName: string, volumesPath: string[]): Promise<void> {
+  console.log('🔒 Creating ZIP...')
+
+  const zip = new JSZip()
+  const zipFolder = zip.folder(mangaName)
+
+  for (const volumePath of volumesPath) {
+    const volumeName = basename(volumePath)
+    zipFolder?.file(volumeName, readFileSync(volumePath))
+
+    unlink(volumePath, (err) => {
+      if (err) throw err
+    })
+  }
+
+  await zip.generateAsync({ type: 'nodebuffer' }).then((content) => {
+    const zipPath = resolve(folderPath, `${mangaName}.zip`)
+    writeFileSync(zipPath, content)
+  })
+
+  console.log('✅ \x1b[32mZIP created!\x1b[0m')
 }
