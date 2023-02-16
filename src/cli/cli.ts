@@ -1,7 +1,7 @@
 import { prompt } from 'enquirer'
 
 import { findMangaById, findMangaByTitle } from '@/manga'
-import { ConfirmMangaSelectionEnum } from '@/models/enums'
+import { ConfirmMangaSelectionEnum, StoreConfigMangaEnum } from '@/models/enums'
 import type {
   Manga,
   MangadexApiReponse,
@@ -48,7 +48,8 @@ export async function cli(): Promise<void> {
 
   console.clear()
 
-  await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en)
+  const storeConfig = await getStoreConfigManga()
+  await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en, storeConfig)
 }
 
 async function getSearchMethod(): Promise<MangaSearchMethod> {
@@ -193,4 +194,18 @@ async function confirmMangaSelection(): Promise<{
         mangaConfirmed: false
       }
   }
+}
+
+async function getStoreConfigManga(): Promise<StoreConfigMangaEnum> {
+  const { store }: { store: StoreConfigMangaEnum } = await prompt({
+    type: 'select',
+    name: 'store',
+    message: 'How do you want to store the manga?',
+    choices: [
+      StoreConfigMangaEnum.PDF,
+      StoreConfigMangaEnum.ZIP,
+    ]
+  })
+
+  return store
 }

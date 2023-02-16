@@ -4,3 +4,9 @@ export enum ConfirmMangaSelectionEnum {
   SEARCH_AGAIN = '🔎 Search again',
   CANCEL = '❌ Cancel'
 }
+
+
+export enum StoreConfigMangaEnum {
+  PDF = '📄 PDF',
+  ZIP = '🗜️ Zip',
+}
