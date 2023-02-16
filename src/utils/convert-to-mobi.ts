@@ -1,6 +1,6 @@
 import { CroppingEnum } from '@/../node-kcc/src/models'
 import { join } from 'path'
-import { KccNode } from 'node-kcc/src'
+import { KccNode } from 'node-kcc'
 
 const kccNode = new KccNode({
   outputDir: join(__dirname, '../../tmp/output')
