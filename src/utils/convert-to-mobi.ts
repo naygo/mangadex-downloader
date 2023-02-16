@@ -1,9 +1,14 @@
+import 'dotenv/config'
+
 import { CroppingEnum } from '@/../node-kcc/src/models'
-import { join } from 'path'
 import { KccNode } from 'node-kcc'
 
+if (!process.env.DOWNLOAD_FOLDER) {
+  throw new Error('DOWNLOAD_FOLDER is not defined in .env file')
+}
+
 const kccNode = new KccNode({
-  outputDir: join(__dirname, '../../tmp/output')
+  outputDir: process.env.DOWNLOAD_FOLDER
 })
 
 export async function convertToMobi(
