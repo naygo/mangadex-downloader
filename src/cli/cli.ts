@@ -35,20 +35,19 @@ export async function cli(): Promise<void> {
       currentPage = mangaSearchResult.currentPage
       mangaInfo = mangaSearchResult.mangaInfo
 
-      showMangaInfo(mangaInfo)
-
-      const mangaSelectionConfirmation = await confirmMangaSelection()
+      const mangaSelectionConfirmation = await confirmMangaSelection(mangaInfo)
 
       mangaConfirmed = mangaSelectionConfirmation.mangaConfirmed
       continueSearch = mangaSelectionConfirmation.continueSearch
     }
   }
 
-  if (!mangaInfo) throw new Error('Manga info is undefined')
+  if (!mangaInfo) throw new Error('Manga info not defined')
 
   console.clear()
 
   const storeConfig = await getStoreConfigManga()
+
   await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en, storeConfig)
 }
 
@@ -162,10 +161,12 @@ async function promptMangaChoices(
   })
 }
 
-async function confirmMangaSelection(): Promise<{
+async function confirmMangaSelection(mangaInfo: Manga): Promise<{
   continueSearch: boolean
   mangaConfirmed: boolean
 }> {
+  showMangaInfo(mangaInfo)
+
   const { confirm }: { confirm: ConfirmMangaSelectionEnum } = await prompt({
     type: 'select',
     name: 'confirm',
@@ -204,7 +205,7 @@ async function getStoreConfigManga(): Promise<StoreConfigMangaEnum> {
     choices: [
       StoreConfigMangaEnum.PDF,
       StoreConfigMangaEnum.ZIP,
-      StoreConfigMangaEnum.MOBI,
+      StoreConfigMangaEnum.MOBI
     ]
   })
 

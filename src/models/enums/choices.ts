@@ -5,9 +5,8 @@ export enum ConfirmMangaSelectionEnum {
   CANCEL = '❌ Cancel'
 }
 
-
 export enum StoreConfigMangaEnum {
-  PDF = '📄 PDF',
-  ZIP = '🗜️ Zip',
-  MOBI = '🗃️ Mobi'
+  PDF = '📄  PDF',
+  ZIP = '🗜️  Zip',
+  MOBI = '🗃️  Mobi'
 }
