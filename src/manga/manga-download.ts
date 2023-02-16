@@ -128,7 +128,7 @@ async function downloadAndSaveCover(
 ): Promise<string> {
   const imageBuffer = await getMangaVolumeCoverBuffer(mangaId, fileName)
 
-  const coverPath = join(folderPath, '_cover.jpg')
+  const coverPath = join(folderPath, 'a_cover.jpg')
 
   writeFileSync(coverPath, imageBuffer)
 
