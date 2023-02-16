@@ -58,6 +58,10 @@ export async function mangaDownload(
   console.log(`🟢 \x1b[32mDOWNLOADING ${volumes.length} VOLUMES\x1b[0m`)
 
   for (const volume of volumes) {
+    if (volume.volume === 'none') {
+      volume.volume = 'Unreleased'
+    }
+
     if (storeConfig === StoreConfigMangaEnum.MOBI) {
       folderPath = createVolumeFolder(volume.volume, folderPath)
     }
@@ -93,7 +97,7 @@ export async function mangaDownload(
         await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
         break
       case StoreConfigMangaEnum.MOBI:
-        await convertToMobi(folderPath, mangaName)
+        await convertToMobi(folderPath, `${mangaName} - Vol. ${volume.volume}`)
         break
       case StoreConfigMangaEnum.ZIP:
         await generateZip(mangaName, volumesPath)
