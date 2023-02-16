@@ -23,6 +23,7 @@ import {
 import { mangadexUploadClient } from './mangadex-clients'
 import JSZip from 'jszip'
 import { StoreConfigMangaEnum } from '@/models/enums'
+import { convertToMobi } from '@/utils/convert-to-mobi'
 import { createVolumeFolder } from './file'
 
 interface DownloadImagesResponse {
@@ -87,15 +88,22 @@ export async function mangaDownload(
 
     verifyIfAllChapterWereDownloaded(chaptersImagesPath)
 
-    const volumePath = await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
-    volumesPath.push(volumePath)
+    switch (storeConfig) {
+      case StoreConfigMangaEnum.PDF:
+        await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
+        break
+      case StoreConfigMangaEnum.MOBI:
+        await convertToMobi(folderPath, mangaName)
+        break
+      case StoreConfigMangaEnum.ZIP:
+        await generateZip(mangaName, volumesPath)
+        break
+      default:
+        break
+    }
 
     console.log(`✅ \x1b[32mVolume ${volume.volume} downloaded!\x1b[0m`)
-    await generateZip(mangaName, volumesPath)
   }
-
-  await new Promise((resolve) => setTimeout(resolve, 2000)) // wait 5 seconds to finish all downloads
-  storeConfig === StoreConfigMangaEnum.PDF && await generateZip(mangaName, volumesPath)
 
   showLogs && console.log('Done! :D')
 }
@@ -116,22 +124,28 @@ async function downloadAndSaveCover(
 ): Promise<string> {
   const imageBuffer = await getMangaVolumeCoverBuffer(mangaId, fileName)
 
-  const coverPath = join(folderPath, `_cover.jpg`)
+  const coverPath = join(folderPath, '_cover.jpg')
 
   writeFileSync(coverPath, imageBuffer)
 
   return coverPath
 }
 
-async function downloadChapter(chapterData: Chapter, chapter: number): Promise<string[]> {
-  const { id, data, chapterHash } = chapterData
+async function downloadChapter(
+  chapterData: Chapter,
+  chapter: number
+): Promise<string[]> {
+  const { data, chapterHash } = chapterData
   const chapterImagesPath: string[] = []
   let count = 1
   const responses: DownloadImagesResponse[] = await Promise.all(
     data.map(async (page) => {
       showLogs && console.log(`Downloading ${page}`)
       const pageUrl = `data/${chapterHash}/${page}`
-      const pagePath = join(folderPath, `chapter ${chapter} - page ${count}.jpg`)
+      const pagePath = join(
+        folderPath,
+        `chapter ${chapter} - page ${count}.jpg`
+      )
       chapterImagesPath.push(pagePath)
       count++
       return {
@@ -150,7 +164,7 @@ async function downloadChapter(chapterData: Chapter, chapter: number): Promise<s
 }
 
 async function findImage(url: string): Promise<AxiosResponse<Buffer, any>> {
-  return retry(async () => await mangadexUploadClient(url), {
+  return await retry(async () => await mangadexUploadClient(url), {
     delay: 200,
     factor: 2,
     maxAttempts: 10,
@@ -209,7 +223,10 @@ async function createChapterPDF(
   return filePath
 }
 
-async function generateZip(mangaName: string, volumesPath: string[]): Promise<void> {
+async function generateZip(
+  mangaName: string,
+  volumesPath: string[]
+): Promise<void> {
   console.log('🔒 Creating ZIP...')
 
   const zip = new JSZip()
