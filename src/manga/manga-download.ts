@@ -23,6 +23,7 @@ import {
 import { mangadexUploadClient } from './mangadex-clients'
 import JSZip from 'jszip'
 import { StoreConfigMangaEnum } from '@/models/enums'
+import { createVolumeFolder } from './file'
 
 interface DownloadImagesResponse {
   path: string
@@ -56,6 +57,10 @@ export async function mangaDownload(
   console.log(`🟢 \x1b[32mDOWNLOADING ${volumes.length} VOLUMES\x1b[0m`)
 
   for (const volume of volumes) {
+    if (storeConfig === StoreConfigMangaEnum.MOBI) {
+      folderPath = createVolumeFolder(volume.volume, folderPath)
+    }
+
     console.log('\x1b[37m-------------------------\x1b[0m')
     console.log(
       `🔹 \x1b[36mVol. ${volume.volume}\x1b[0m - \x1b[33m${volume.chapters.length} chapters\x1b[0m`
@@ -73,28 +78,32 @@ export async function mangaDownload(
       chaptersImagesPath.push(coverPath)
     }
 
-    for (const chapter of volume.chapters) {
+    for (const [index, chapter] of volume.chapters.entries()) {
       showLogs && console.log('Downloading chapter: ', chapter.chapter)
       const chapterData = await findMangaChapters(chapter.id)
-
       // TODO - add verification of exceptions
-      chaptersImagesPath.push(...(await downloadChapter(chapterData)))
+      chaptersImagesPath.push(...(await downloadChapter(chapterData, index)))
     }
 
-    showLogs && console.log('Total pages: ', chaptersImagesPath.length)
-    const notDownloaded = chaptersImagesPath.filter((path) => !existsSync(path))
-    showLogs && console.log('Not downloaded: ', notDownloaded.length)
+    verifyIfAllChapterWereDownloaded(chaptersImagesPath)
 
     const volumePath = await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
     volumesPath.push(volumePath)
 
     console.log(`✅ \x1b[32mVolume ${volume.volume} downloaded!\x1b[0m`)
+    await generateZip(mangaName, volumesPath)
   }
 
   await new Promise((resolve) => setTimeout(resolve, 2000)) // wait 5 seconds to finish all downloads
   storeConfig === StoreConfigMangaEnum.PDF && await generateZip(mangaName, volumesPath)
 
   showLogs && console.log('Done! :D')
+}
+
+function verifyIfAllChapterWereDownloaded(chaptersImagesPath: string[]): void {
+  showLogs && console.log('Total pages: ', chaptersImagesPath.length)
+  const notDownloaded = chaptersImagesPath.filter((path) => !existsSync(path))
+  showLogs && console.log('Not downloaded: ', notDownloaded.length)
 }
 
 function getVolumeCover(covers: Cover[], volume: string): Cover | undefined {
@@ -107,23 +116,24 @@ async function downloadAndSaveCover(
 ): Promise<string> {
   const imageBuffer = await getMangaVolumeCoverBuffer(mangaId, fileName)
 
-  const coverPath = join(folderPath, `${mangaId}-cover.jpg`)
+  const coverPath = join(folderPath, `_cover.jpg`)
 
   writeFileSync(coverPath, imageBuffer)
 
   return coverPath
 }
 
-async function downloadChapter(chapterData: Chapter): Promise<string[]> {
+async function downloadChapter(chapterData: Chapter, chapter: number): Promise<string[]> {
   const { id, data, chapterHash } = chapterData
   const chapterImagesPath: string[] = []
-
+  let count = 1
   const responses: DownloadImagesResponse[] = await Promise.all(
     data.map(async (page) => {
       showLogs && console.log(`Downloading ${page}`)
       const pageUrl = `data/${chapterHash}/${page}`
-      const pagePath = join(folderPath, `${id}-${page}`)
+      const pagePath = join(folderPath, `chapter ${chapter} - page ${count}.jpg`)
       chapterImagesPath.push(pagePath)
+      count++
       return {
         path: pagePath,
         page,
@@ -133,7 +143,6 @@ async function downloadChapter(chapterData: Chapter): Promise<string[]> {
   )
 
   for (const image of responses) {
-    // save images
     writeFileSync(image.path, image.response.data)
   }
 
@@ -141,7 +150,7 @@ async function downloadChapter(chapterData: Chapter): Promise<string[]> {
 }
 
 async function findImage(url: string): Promise<AxiosResponse<Buffer, any>> {
-  return await retry(async () => await mangadexUploadClient(url), {
+  return retry(async () => await mangadexUploadClient(url), {
     delay: 200,
     factor: 2,
     maxAttempts: 10,

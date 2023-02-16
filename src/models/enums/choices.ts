@@ -9,4 +9,5 @@ export enum ConfirmMangaSelectionEnum {
 export enum StoreConfigMangaEnum {
   PDF = '📄 PDF',
   ZIP = '🗜️ Zip',
+  MOBI = '🗃️ Mobi'
 }

@@ -204,6 +204,7 @@ async function getStoreConfigManga(): Promise<StoreConfigMangaEnum> {
     choices: [
       StoreConfigMangaEnum.PDF,
       StoreConfigMangaEnum.ZIP,
+      StoreConfigMangaEnum.MOBI,
     ]
   })
 
