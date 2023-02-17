@@ -12,7 +12,6 @@ import {
   formatChoicesToPrompt,
   showMangaInfo
 } from '@/utils/mangadex'
-import { mangaSearchMethodOptions } from './options'
 import { mangaDownload } from '@/manga/manga-download'
 
 export async function cli(): Promise<void> {
@@ -20,8 +19,7 @@ export async function cli(): Promise<void> {
   let mangaInfo: Manga | null = null
 
   while (continueSearch) {
-    const searchMethod = await getSearchMethod()
-    const mangaNameOrId = await getMangaNameOrId(searchMethod)
+    const mangaNameOrId = await getMangaNameOrId()
 
     let mangaConfirmed = false
 
@@ -47,26 +45,13 @@ export async function cli(): Promise<void> {
   await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en, storeConfig)
 }
 
-async function getSearchMethod(): Promise<MangaSearchMethod> {
+async function getMangaNameOrId(): Promise<string> {
   console.clear()
 
-  const { choice } = await prompt<{ choice: MangaSearchMethod }>({
-    type: 'select',
-    name: 'choice',
-    message: 'Select the search method you want to use:',
-    choices: mangaSearchMethodOptions
-  })
-
-  return choice
-}
-
-async function getMangaNameOrId(
-  searchMethod: MangaSearchMethod
-): Promise<string> {
   const { manga } = await prompt<{ manga: string }>({
     type: 'input',
     name: 'manga',
-    message: `Enter the ${searchMethod} of the manga:`
+    message: 'Enter the Name or the UUID (mangadex) of the manga:'
   })
 
   return manga
