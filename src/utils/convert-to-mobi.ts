@@ -15,6 +15,8 @@ export async function convertToMobi(
   inputFile: string,
   mangaName: string
 ): Promise<void> {
+  console.log('🗃️ Creating Mobi...')
+
   await kccNode.convert({
     inputFile,
     convertOptions: {
