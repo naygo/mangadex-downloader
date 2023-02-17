@@ -1,21 +1,18 @@
-import 'dotenv/config'
-
 import { CroppingEnum } from '@/../node-kcc/src/models'
 import { KccNode } from 'node-kcc'
 
-if (!process.env.DOWNLOAD_FOLDER) {
-  throw new Error('DOWNLOAD_FOLDER is not defined in .env file')
-}
-
-const kccNode = new KccNode({
-  outputDir: process.env.DOWNLOAD_FOLDER
-})
-
-export async function convertToMobi(
-  inputFile: string,
+export async function convertToMobi(params: {
+  outputDir: string
+  inputFile: string
   mangaName: string
-): Promise<void> {
+}): Promise<void> {
   console.log('🗃️ Creating Mobi...')
+
+  const { inputFile, mangaName, outputDir } = params
+
+  const kccNode = new KccNode({
+    outputDir
+  })
 
   await kccNode.convert({
     inputFile,

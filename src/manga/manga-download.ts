@@ -9,6 +9,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  rmdirSync,
   unlink,
   writeFileSync
 } from 'fs'
@@ -63,10 +64,10 @@ export async function mangaDownload(
     }
 
     if (storeConfig === StoreConfigMangaEnum.MOBI) {
-      if(folderPath.includes('Vol.')) {
-        folderPath = folderPath.split('Vol.')[0]
+      if (folderPath.includes('Vol.')) {
+        folderPath = folderPath.split(`${mangaName} - Vol.`)[0]
       }
-      folderPath = createVolumeFolder(volume.volume, folderPath)
+      folderPath = createVolumeFolder(mangaName, volume.volume, folderPath)
     }
 
     console.log('\x1b[37m-------------------------\x1b[0m')
@@ -100,7 +101,14 @@ export async function mangaDownload(
         await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
         break
       case StoreConfigMangaEnum.MOBI:
-        await convertToMobi(folderPath, `${mangaName} - Vol. ${volume.volume}`)
+        await convertToMobi({
+          inputFile: folderPath,
+          mangaName: `${mangaName} - Vol. ${volume.volume}`,
+          outputDir: join(process.env.DOWNLOAD_FOLDER as string, mangaName)
+        })
+
+        rmdirSync(folderPath, { recursive: true })
+
         break
       case StoreConfigMangaEnum.ZIP:
         await generateZip(mangaName, volumesPath)
