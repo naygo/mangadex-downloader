@@ -1,8 +1,8 @@
 import 'dotenv/config'
 
+import { StoreConfigMangaEnum } from '@/models/enums'
 import type { Chapter } from '@/models/interfaces'
 import { getAllMangaCovers } from '@/utils/mangadex'
-import { retry } from '@lifeomic/attempt'
 import { type AxiosResponse } from 'axios'
 import { existsSync, rmdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
@@ -12,7 +12,6 @@ import {
   findMangaVolumes,
   getMangaVolumeCoverBuffer
 } from './mangadex-api'
-import { StoreConfigMangaEnum } from '@/models/enums'
 import {
   convertToMobi,
   createChapterPDF,

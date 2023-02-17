@@ -1,18 +1,18 @@
 import 'dotenv/config'
 
-import { retry } from '@lifeomic/attempt'
-import axios, { type AxiosResponse } from 'axios'
+import axios, { AxiosResponse } from 'axios'
 import * as http from 'http'
-import type {
-  MangadexApiReponse,
+import {
+  Chapter,
+  Cover,
   Manga,
-  MangaDexResponse,
-  Cover
-} from '../models/interfaces'
-import type { MangadexAggregate } from '../models/interfaces/aggregate'
-import type { Volume } from '../models/interfaces/volume'
-import { formatVolumes } from '../utils/format-volumes'
-import type { Chapter, MangadexChapter } from '../models/interfaces/chapter'
+  MangadexApiReponse,
+  MangadexChapter,
+  MangaDexResponse
+} from '@/models/interfaces'
+import { MangadexAggregate, Volume } from '@/models/interfaces'
+import { formatVolumes } from '@/utils'
+import { retry } from '@lifeomic/attempt'
 
 const showLogs = process.env.SHOW_LOGS === 'true'
 

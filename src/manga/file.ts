@@ -8,10 +8,9 @@ import {
   unlink,
   writeFileSync
 } from 'fs'
-import { basename, join, resolve } from 'path'
-
 import JSZip from 'jszip'
 import sizeOf from 'image-size'
+import { basename, join, resolve } from 'path'
 import PDFDocument from 'pdfkit'
 
 const showLogs = process.env.SHOW_LOGS === 'true'
