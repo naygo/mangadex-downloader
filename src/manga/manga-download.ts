@@ -63,6 +63,9 @@ export async function mangaDownload(
     }
 
     if (storeConfig === StoreConfigMangaEnum.MOBI) {
+      if(folderPath.includes('Vol.')) {
+        folderPath = folderPath.split('Vol.')[0]
+      }
       folderPath = createVolumeFolder(volume.volume, folderPath)
     }
 
