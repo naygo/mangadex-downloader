@@ -5,3 +5,8 @@ export interface Volume {
     id: string
   }>
 }
+
+export interface VolumeRange {
+  start: number
+  end: number
+}

@@ -2,7 +2,11 @@ import { prompt } from 'enquirer'
 
 import { findMangaById, findMangaByTitle } from '@/manga'
 import { ConfirmMangaSelectionEnum, StoreConfigMangaEnum } from '@/models/enums'
-import type { Manga, MangadexApiReponse } from '@/models/interfaces'
+import type {
+  Manga,
+  MangadexApiReponse,
+  VolumeRange
+} from '@/models/interfaces'
 import {
   findSelectedMangaInfo,
   formatChoicesToPrompt,
@@ -39,12 +43,14 @@ export async function cli(): Promise<void> {
   const storeConfig = await getStoreConfigManga()
 
   const language = await getMangaLanguage()
+  const volumeRange = await getMangaDownloadRange()
 
   await mangaDownload({
     language,
     mangaId: mangaInfo.id,
     mangaName: mangaInfo.attributes.title.en,
-    storeConfig
+    storeConfig,
+    volumeRange
   })
 }
 
@@ -215,4 +221,25 @@ async function getMangaLanguage(): Promise<string> {
   })
 
   return language
+}
+
+async function getMangaDownloadRange(): Promise<VolumeRange> {
+  console.clear()
+
+  const { volumesRange }: { volumesRange: string } = await prompt({
+    type: 'input',
+    name: 'volumesRange',
+    message: `[Optional] Enter the volumes range you want to download (e.g. 1-10)\n(1-1) will download only the first volume\n(1-10) will download the first 10 volumes\n(5-) will download from the 5th volume to the last one\n(Blank) will download all volumes\n`
+  })
+
+  if (!volumesRange.match(/^[0-9]+-([0-9]+)?$/)) {
+    return getMangaDownloadRange()
+  }
+
+  const [start, end] = volumesRange.split('-')
+
+  return {
+    start: start ? parseInt(start) : 1,
+    end: end ? parseInt(end) : -1
+  }
 }

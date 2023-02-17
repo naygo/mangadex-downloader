@@ -1,7 +1,7 @@
 import 'dotenv/config'
 
 import { StoreConfigMangaEnum } from '@/models/enums'
-import type { Chapter } from '@/models/interfaces'
+import type { Chapter, VolumeRange } from '@/models/interfaces'
 import { getAllMangaCovers } from '@/utils/mangadex'
 import { type AxiosResponse } from 'axios'
 import { existsSync, rmdirSync, writeFileSync } from 'fs'
@@ -19,6 +19,7 @@ import {
   createVolumeFolder,
   generateZip
 } from './file'
+import { getVolumesInRange } from '@/utils'
 
 interface DownloadImagesResponse {
   path: string
@@ -34,20 +35,22 @@ export async function mangaDownload(params: {
   mangaName: string
   language: string
   storeConfig: StoreConfigMangaEnum
+  volumeRange: VolumeRange
 }): Promise<void> {
-  const { language, mangaId, mangaName, storeConfig } = params
+  const { language, mangaId, mangaName, storeConfig, volumeRange } = params
 
   const rootFolderPath = createDestinationFolder(mangaName)
   folderPath = rootFolderPath
 
   const volumes = await findMangaVolumes(mangaId, language)
+  const volumesInRange = getVolumesInRange(volumes, volumeRange)
   const covers = await getAllMangaCovers(mangaId)
 
   const volumesPath: string[] = []
 
-  console.log(`🟢 \x1b[32mDOWNLOADING ${volumes.length} VOLUMES\x1b[0m`)
+  console.log(`🟢 \x1b[32mDOWNLOADING ${volumesInRange.length} VOLUMES\x1b[0m`)
 
-  for (const volume of volumes) {
+  for (const volume of volumesInRange) {
     if (volume.volume === 'none') {
       volume.volume = 'Unreleased'
     }
