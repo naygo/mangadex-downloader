@@ -99,3 +99,42 @@ export async function generateZip(
 
   console.log('✅ \x1b[32mZIP created!\x1b[0m')
 }
+
+export function createDestinationFolder(mangaName: string): string {
+  const dirPath = process.env.DOWNLOAD_FOLDER as string
+  if (!dirPath) throw new Error('DOWNLOAD_FOLDER is not defined in .env file')
+
+  const newFolderPath = join(dirPath, mangaName)
+  if (!existsSync(newFolderPath)) mkdirSync(newFolderPath, { recursive: true })
+
+  return resolve(newFolderPath)
+}
+
+import { CroppingEnum } from '@/../node-kcc/src/models'
+import { KccNode } from 'node-kcc'
+
+export async function convertToMobi(params: {
+  outputDir: string
+  inputFile: string
+  mangaName: string
+}): Promise<void> {
+  console.log('🗃️ Creating Mobi...')
+
+  const { inputFile, mangaName, outputDir } = params
+
+  const kccNode = new KccNode({
+    outputDir
+  })
+
+  await kccNode.convert({
+    inputFile,
+    convertOptions: {
+      title: mangaName,
+      cropping: CroppingEnum.MARGINS,
+      format: 'MOBI',
+      mangaStyle: true,
+      stretch: true,
+      upscale: true
+    }
+  })
+}

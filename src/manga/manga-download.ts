@@ -1,18 +1,11 @@
 import 'dotenv/config'
 
-import type { Cover, Chapter } from '@/models/interfaces'
+import type { Chapter } from '@/models/interfaces'
 import { getAllMangaCovers } from '@/utils/mangadex'
 import { retry } from '@lifeomic/attempt'
 import { type AxiosResponse } from 'axios'
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmdirSync,
-  unlink,
-  writeFileSync
-} from 'fs'
-import { join, resolve } from 'path'
+import { existsSync, rmdirSync, writeFileSync } from 'fs'
+import { join } from 'path'
 import {
   findMangaChapters,
   findMangaVolumes,
@@ -20,8 +13,13 @@ import {
 } from './mangadex-api-data'
 import { mangadexUploadClient } from './mangadex-clients'
 import { StoreConfigMangaEnum } from '@/models/enums'
-import { convertToMobi } from '@/utils/convert-to-mobi'
-import { createChapterPDF, createVolumeFolder, generateZip } from './file'
+import {
+  convertToMobi,
+  createChapterPDF,
+  createDestinationFolder,
+  createVolumeFolder,
+  generateZip
+} from './file'
 
 interface DownloadImagesResponse {
   path: string
@@ -32,24 +30,16 @@ interface DownloadImagesResponse {
 let folderPath = ''
 const showLogs = process.env.SHOW_LOGS === 'true'
 
-function createDestinationFolder(mangaName: string): void {
-  const dirPath = process.env.DOWNLOAD_FOLDER as string
-  if (!dirPath) throw new Error('DOWNLOAD_FOLDER is not defined in .env file')
-
-  const newFolderPath = join(dirPath, mangaName)
-  if (!existsSync(newFolderPath)) mkdirSync(newFolderPath, { recursive: true })
-  folderPath = resolve(newFolderPath)
-}
-
 export async function mangaDownload(
   mangaId: string,
   mangaName: string,
   storeConfig: StoreConfigMangaEnum
 ): Promise<void> {
-  createDestinationFolder(mangaName)
+  folderPath = createDestinationFolder(mangaName)
 
   const volumes = await findMangaVolumes(mangaId)
   const covers = await getAllMangaCovers(mangaId)
+
   const volumesPath: string[] = []
 
   console.log(`🟢 \x1b[32mDOWNLOADING ${volumes.length} VOLUMES\x1b[0m`)
@@ -59,20 +49,13 @@ export async function mangaDownload(
       volume.volume = 'Unreleased'
     }
 
-    if (storeConfig === StoreConfigMangaEnum.MOBI) {
-      if (folderPath.includes('Vol.')) {
-        folderPath = folderPath.split(`${mangaName} - Vol.`)[0]
-      }
-      folderPath = createVolumeFolder(mangaName, volume.volume, folderPath)
-    }
-
     console.log('\x1b[37m-------------------------\x1b[0m')
     console.log(
       `🔹 \x1b[36mVol. ${volume.volume}\x1b[0m - \x1b[33m${volume.chapters.length} chapters\x1b[0m`
     )
 
     const chaptersImagesPath: string[] = []
-    const volumeCover = getVolumeCover(covers, volume.volume)
+    const volumeCover = covers.find((cover) => cover.volume === volume.volume)
 
     if (volumeCover) {
       const coverPath = await downloadAndSaveCover(
@@ -102,6 +85,12 @@ export async function mangaDownload(
         )
         break
       case StoreConfigMangaEnum.MOBI:
+        if (folderPath.includes('Vol.')) {
+          folderPath = folderPath.split(`${mangaName} - Vol.`)[0]
+        }
+
+        folderPath = createVolumeFolder(mangaName, volume.volume, folderPath)
+
         await convertToMobi({
           inputFile: folderPath,
           mangaName: `${mangaName} - Vol. ${volume.volume}`,
@@ -128,10 +117,6 @@ function verifyIfAllChapterWereDownloaded(chaptersImagesPath: string[]): void {
   showLogs && console.log('Total pages: ', chaptersImagesPath.length)
   const notDownloaded = chaptersImagesPath.filter((path) => !existsSync(path))
   showLogs && console.log('Not downloaded: ', notDownloaded.length)
-}
-
-function getVolumeCover(covers: Cover[], volume: string): Cover | undefined {
-  return covers.find((cover) => cover.volume === volume)
 }
 
 async function downloadAndSaveCover(
