@@ -94,9 +94,12 @@ export async function getMangaVolumeCoverBuffer(
   return response.data
 }
 
-export async function findMangaVolumes(mangaId: string): Promise<Volume[]> {
+export async function findMangaVolumes(
+  mangaId: string,
+  language: string
+): Promise<Volume[]> {
   const response = await mangadexClient.get<MangadexAggregate>(
-    `/manga/${mangaId}/aggregate?translatedLanguage[]=pt-br`,
+    `/manga/${mangaId}/aggregate?translatedLanguage[]=${language}`,
     {}
   )
 

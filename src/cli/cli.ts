@@ -38,7 +38,14 @@ export async function cli(): Promise<void> {
 
   const storeConfig = await getStoreConfigManga()
 
-  await mangaDownload(mangaInfo.id, mangaInfo.attributes.title.en, storeConfig)
+  const language = await getMangaLanguage()
+
+  await mangaDownload({
+    language,
+    mangaId: mangaInfo.id,
+    mangaName: mangaInfo.attributes.title.en,
+    storeConfig
+  })
 }
 
 async function getMangaNameOrId(): Promise<string> {
@@ -189,4 +196,23 @@ async function getStoreConfigManga(): Promise<StoreConfigMangaEnum> {
   })
 
   return store
+}
+
+async function getMangaLanguage(): Promise<string> {
+  console.clear()
+
+  const languageMapping = {
+    'English 🇬🇧': 'en',
+    'Portuguese 🇧🇷': 'pt-br'
+  }
+
+  const { language } = await prompt<{ language: string }>({
+    type: 'select',
+    name: 'language',
+    message: 'Which language do you want to download?',
+    choices: Object.keys(languageMapping),
+    result: (choice: string) => languageMapping[choice]
+  })
+
+  return language
 }

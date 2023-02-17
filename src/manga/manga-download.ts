@@ -29,15 +29,18 @@ interface DownloadImagesResponse {
 let folderPath = ''
 const showLogs = process.env.SHOW_LOGS === 'true'
 
-export async function mangaDownload(
-  mangaId: string,
-  mangaName: string,
+export async function mangaDownload(params: {
+  mangaId: string
+  mangaName: string
+  language: string
   storeConfig: StoreConfigMangaEnum
-): Promise<void> {
+}): Promise<void> {
+  const { language, mangaId, mangaName, storeConfig } = params
+
   const rootFolderPath = createDestinationFolder(mangaName)
   folderPath = rootFolderPath
 
-  const volumes = await findMangaVolumes(mangaId)
+  const volumes = await findMangaVolumes(mangaId, language)
   const covers = await getAllMangaCovers(mangaId)
 
   const volumesPath: string[] = []
