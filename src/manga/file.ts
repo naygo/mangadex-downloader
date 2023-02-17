@@ -1,16 +1,9 @@
 import 'dotenv/config'
 
-import {
-  createWriteStream,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  unlink,
-  writeFileSync
-} from 'fs'
+import fs from 'fs'
 import JSZip from 'jszip'
 import sizeOf from 'image-size'
-import { basename, join, resolve } from 'path'
+import path from 'path'
 import PDFDocument from 'pdfkit'
 
 const showLogs = process.env.SHOW_LOGS === 'true'
@@ -20,9 +13,14 @@ export function createVolumeFolder(
   volume: string,
   folderPath: string
 ): string {
-  const volumeFolderPath = join(folderPath, `${mangaName} - Vol. ${volume}`)
-  if (!existsSync(volumeFolderPath))
-    mkdirSync(volumeFolderPath, { recursive: true })
+  const volumeFolderPath = path.join(
+    folderPath,
+    `${mangaName} - Vol. ${volume}`
+  )
+
+  if (!fs.existsSync(volumeFolderPath)) {
+    fs.mkdirSync(volumeFolderPath, { recursive: true })
+  }
 
   return volumeFolderPath
 }
@@ -41,8 +39,9 @@ export async function createChapterPDF(
   })
 
   const fileName = `${mangaName} - Vol. ${volume}.pdf`
-  const filePath = resolve(folderPath, fileName)
-  mangaPDF.pipe(createWriteStream(filePath))
+  const filePath = path.resolve(folderPath, fileName)
+
+  mangaPDF.pipe(fs.createWriteStream(filePath))
 
   for (const imagePath of chaptersImagesPath) {
     showLogs && console.log(`Adding page ${imagePath}`)
@@ -63,7 +62,7 @@ export async function createChapterPDF(
         valign: 'center'
       })
 
-    unlink(imagePath, (err) => {
+    fs.unlink(imagePath, (err) => {
       if (err) throw err
     })
   }
@@ -83,30 +82,41 @@ export async function generateZip(
   const zipFolder = zip.folder(mangaName)
 
   for (const volumePath of volumesPath) {
-    const volumeName = basename(volumePath)
-    zipFolder?.file(volumeName, readFileSync(volumePath))
+    const volumeName = path.basename(volumePath)
+    const files = await fs.promises.readdir(volumePath)
 
-    unlink(volumePath, (err) => {
-      if (err) throw err
-    })
+    for (const file of files) {
+      const filePath = path.join(volumePath, file)
+      const fileContent = await fs.promises.readFile(filePath)
+
+      zipFolder?.file(`${volumeName}/${file}`, fileContent)
+    }
   }
 
-  await zip.generateAsync({ type: 'nodebuffer' }).then((content) => {
-    const zipPath = resolve(folderPath, `${mangaName}.zip`)
-    writeFileSync(zipPath, content)
-  })
+  const zipData = await zip.generateAsync({ type: 'nodebuffer' })
+  const zipPath = path.join(folderPath, `${mangaName}.zip`)
 
-  console.log('✅ \x1b[32mZIP created!\x1b[0m')
+  await fs.promises.writeFile(zipPath, zipData)
+
+  for (const volumePath of volumesPath) {
+    fs.promises.rmdir(volumePath, { recursive: true })
+  }
+
+  console.log(`✅ \x1b[32mZIP created: ${zipPath}\x1b[0m`)
 }
 
 export function createDestinationFolder(mangaName: string): string {
   const dirPath = process.env.DOWNLOAD_FOLDER as string
+
   if (!dirPath) throw new Error('DOWNLOAD_FOLDER is not defined in .env file')
 
-  const newFolderPath = join(dirPath, mangaName)
-  if (!existsSync(newFolderPath)) mkdirSync(newFolderPath, { recursive: true })
+  const newFolderPath = path.join(dirPath, mangaName)
 
-  return resolve(newFolderPath)
+  if (!fs.existsSync(newFolderPath)) {
+    fs.mkdirSync(newFolderPath, { recursive: true })
+  }
+
+  return path.resolve(newFolderPath)
 }
 
 import { CroppingEnum } from '@/../node-kcc/src/models'

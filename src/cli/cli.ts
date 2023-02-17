@@ -2,11 +2,7 @@ import { prompt } from 'enquirer'
 
 import { findMangaById, findMangaByTitle } from '@/manga'
 import { ConfirmMangaSelectionEnum, StoreConfigMangaEnum } from '@/models/enums'
-import type {
-  Manga,
-  MangadexApiReponse,
-  MangaSearchMethod
-} from '@/models/interfaces'
+import type { Manga, MangadexApiReponse } from '@/models/interfaces'
 import {
   findSelectedMangaInfo,
   formatChoicesToPrompt,

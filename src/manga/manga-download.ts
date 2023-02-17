@@ -34,7 +34,8 @@ export async function mangaDownload(
   mangaName: string,
   storeConfig: StoreConfigMangaEnum
 ): Promise<void> {
-  folderPath = createDestinationFolder(mangaName)
+  const rootFolderPath = createDestinationFolder(mangaName)
+  folderPath = rootFolderPath
 
   const volumes = await findMangaVolumes(mangaId)
   const covers = await getAllMangaCovers(mangaId)
@@ -46,6 +47,17 @@ export async function mangaDownload(
   for (const volume of volumes) {
     if (volume.volume === 'none') {
       volume.volume = 'Unreleased'
+    }
+
+    if (
+      storeConfig === StoreConfigMangaEnum.MOBI ||
+      storeConfig === StoreConfigMangaEnum.ZIP
+    ) {
+      if (folderPath.includes('Vol.')) {
+        folderPath = folderPath.split(`${mangaName} - Vol.`)[0]
+      }
+
+      folderPath = createVolumeFolder(mangaName, volume.volume, folderPath)
     }
 
     console.log('\x1b[37m-------------------------\x1b[0m')
@@ -84,12 +96,6 @@ export async function mangaDownload(
         )
         break
       case StoreConfigMangaEnum.MOBI:
-        if (folderPath.includes('Vol.')) {
-          folderPath = folderPath.split(`${mangaName} - Vol.`)[0]
-        }
-
-        folderPath = createVolumeFolder(mangaName, volume.volume, folderPath)
-
         await convertToMobi({
           inputFile: folderPath,
           mangaName: `${mangaName} - Vol. ${volume.volume}`,
@@ -97,16 +103,19 @@ export async function mangaDownload(
         })
 
         rmdirSync(folderPath, { recursive: true })
-
         break
       case StoreConfigMangaEnum.ZIP:
-        await generateZip(mangaName, volumesPath, folderPath)
+        volumesPath.push(folderPath)
         break
       default:
         break
     }
 
     console.log(`✅ \x1b[32mVolume ${volume.volume} downloaded!\x1b[0m`)
+  }
+
+  if (storeConfig === StoreConfigMangaEnum.ZIP) {
+    await generateZip(mangaName, volumesPath, rootFolderPath)
   }
 
   showLogs && console.log('Done! :D')

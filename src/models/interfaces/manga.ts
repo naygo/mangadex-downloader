@@ -1,5 +1,3 @@
-export type MangaSearchMethod = 'name' | 'id'
-
 export interface MangaDexResponse<T> {
   id: string
   type: string
