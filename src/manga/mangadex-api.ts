@@ -1,5 +1,8 @@
-import { mangadexClient, mangadexUploadClient } from './mangadex-clients'
+import 'dotenv/config'
 
+import { retry } from '@lifeomic/attempt'
+import axios, { type AxiosResponse } from 'axios'
+import * as http from 'http'
 import type {
   MangadexApiReponse,
   Manga,
@@ -10,6 +13,22 @@ import type { MangadexAggregate } from '../models/interfaces/aggregate'
 import type { Volume } from '../models/interfaces/volume'
 import { formatVolumes } from '../utils/format-volumes'
 import type { Chapter, MangadexChapter } from '../models/interfaces/chapter'
+
+const showLogs = process.env.SHOW_LOGS === 'true'
+
+export const mangadexClient = axios.create({
+  baseURL: 'https://api.mangadex.org',
+  httpAgent: new http.Agent({ keepAlive: true })
+})
+
+export const mangadexUploadClient = axios.create({
+  baseURL: 'http://uploads.mangadex.org',
+  responseType: 'arraybuffer',
+  timeout: 30000,
+  headers: {
+    Connection: 'Keep-Alive'
+  }
+})
 
 export async function findMangaByTitle(
   title: string,
@@ -82,6 +101,24 @@ export async function findMangaVolumes(mangaId: string): Promise<Volume[]> {
   )
 
   return formatVolumes(response.data.volumes)
+}
+
+export async function findImage(
+  url: string
+): Promise<AxiosResponse<Buffer, any>> {
+  return await retry(async () => await mangadexUploadClient(url), {
+    delay: 200,
+    factor: 2,
+    maxAttempts: 10,
+    handleError: (_, ctx) => {
+      showLogs &&
+        console.log(
+          `im erroring bro :( (${String(ctx.attemptNum)} attempts, ${String(
+            ctx.attemptsRemaining
+          )} remaining)`
+        )
+    }
+  })
 }
 
 export async function findMangaChapters(chapterId: string): Promise<Chapter> {

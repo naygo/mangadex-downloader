@@ -7,11 +7,11 @@ import { type AxiosResponse } from 'axios'
 import { existsSync, rmdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import {
+  findImage,
   findMangaChapters,
   findMangaVolumes,
   getMangaVolumeCoverBuffer
-} from './mangadex-api-data'
-import { mangadexUploadClient } from './mangadex-clients'
+} from './mangadex-api'
 import { StoreConfigMangaEnum } from '@/models/enums'
 import {
   convertToMobi,
@@ -138,17 +138,22 @@ async function downloadChapter(
 ): Promise<string[]> {
   const { data, chapterHash } = chapterData
   const chapterImagesPath: string[] = []
+
   let count = 1
+
   const responses: DownloadImagesResponse[] = await Promise.all(
     data.map(async (page) => {
       showLogs && console.log(`Downloading ${page}`)
+
       const pageUrl = `data/${chapterHash}/${page}`
       const pagePath = join(
         folderPath,
         `chapter ${chapter} - page ${count}.jpg`
       )
+
       chapterImagesPath.push(pagePath)
       count++
+
       return {
         path: pagePath,
         page,
@@ -162,20 +167,4 @@ async function downloadChapter(
   }
 
   return chapterImagesPath
-}
-
-async function findImage(url: string): Promise<AxiosResponse<Buffer, any>> {
-  return await retry(async () => await mangadexUploadClient(url), {
-    delay: 200,
-    factor: 2,
-    maxAttempts: 10,
-    handleError: (_, ctx) => {
-      showLogs &&
-        console.log(
-          `im erroring bro :( (${String(ctx.attemptNum)} attempts, ${String(
-            ctx.attemptsRemaining
-          )} remaining)`
-        )
-    }
-  })
 }

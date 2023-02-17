@@ -1,2 +1,2 @@
-export * from './mangadex-api-data'
+export * from './mangadex-api'
 export * from './mangadex-clients'
