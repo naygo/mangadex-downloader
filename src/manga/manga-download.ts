@@ -4,7 +4,7 @@ import { StoreConfigMangaEnum } from '@/models/enums'
 import type { Chapter, VolumeRange } from '@/models/interfaces'
 import { getAllMangaCovers } from '@/utils/mangadex'
 import { type AxiosResponse } from 'axios'
-import { existsSync, rmdirSync, writeFileSync } from 'fs'
+import { existsSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import {
   findImage,
@@ -13,7 +13,6 @@ import {
   getMangaVolumeCoverBuffer
 } from './mangadex-api'
 import {
-  convertToMobi,
   createChapterPDF,
   createDestinationFolder,
   createVolumeFolder,
@@ -55,10 +54,7 @@ export async function mangaDownload(params: {
       volume.volume = 'Unreleased'
     }
 
-    if (
-      storeConfig === StoreConfigMangaEnum.MOBI ||
-      storeConfig === StoreConfigMangaEnum.ZIP
-    ) {
+    if (storeConfig === StoreConfigMangaEnum.ZIP) {
       if (folderPath.includes('Vol.')) {
         folderPath = folderPath.split(`${mangaName} - Vol.`)[0]
       }
@@ -100,15 +96,6 @@ export async function mangaDownload(params: {
           volume.volume,
           folderPath
         )
-        break
-      case StoreConfigMangaEnum.MOBI:
-        await convertToMobi({
-          inputFile: folderPath,
-          mangaName: `${mangaName} - Vol. ${volume.volume}`,
-          outputDir: join(process.env.DOWNLOAD_FOLDER as string, mangaName)
-        })
-
-        rmdirSync(folderPath, { recursive: true })
         break
       case StoreConfigMangaEnum.ZIP:
         volumesPath.push(folderPath)

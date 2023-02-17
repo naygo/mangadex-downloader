@@ -194,11 +194,7 @@ async function getStoreConfigManga(): Promise<StoreConfigMangaEnum> {
     type: 'select',
     name: 'store',
     message: 'How do you want to store the manga?',
-    choices: [
-      StoreConfigMangaEnum.PDF,
-      StoreConfigMangaEnum.ZIP,
-      StoreConfigMangaEnum.MOBI
-    ]
+    choices: [StoreConfigMangaEnum.PDF, StoreConfigMangaEnum.ZIP]
   })
 
   return store
