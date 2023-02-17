@@ -5,6 +5,8 @@ import JSZip from 'jszip'
 import sizeOf from 'image-size'
 import path from 'path'
 import PDFDocument from 'pdfkit'
+import { KccNode } from 'node-kcc'
+import { CroppingEnum } from 'node-kcc/dist/models'
 
 const showLogs = process.env.SHOW_LOGS === 'true'
 
@@ -118,9 +120,6 @@ export function createDestinationFolder(mangaName: string): string {
 
   return path.resolve(newFolderPath)
 }
-
-import { CroppingEnum } from '@/../node-kcc/src/models'
-import { KccNode } from 'node-kcc'
 
 export async function convertToMobi(params: {
   outputDir: string
