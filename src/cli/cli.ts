@@ -16,8 +16,6 @@ import { mangaSearchMethodOptions } from './options'
 import { mangaDownload } from '@/manga/manga-download'
 
 export async function cli(): Promise<void> {
-  console.clear()
-
   let continueSearch = true
   let mangaInfo: Manga | null = null
 
@@ -43,8 +41,6 @@ export async function cli(): Promise<void> {
   }
 
   if (!mangaInfo) throw new Error('Manga info not defined')
-
-  console.clear()
 
   const storeConfig = await getStoreConfigManga()
 
@@ -198,6 +194,8 @@ async function confirmMangaSelection(mangaInfo: Manga): Promise<{
 }
 
 async function getStoreConfigManga(): Promise<StoreConfigMangaEnum> {
+  console.clear()
+
   const { store }: { store: StoreConfigMangaEnum } = await prompt({
     type: 'select',
     name: 'store',
