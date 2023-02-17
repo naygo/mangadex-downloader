@@ -5,26 +5,20 @@ import { getAllMangaCovers } from '@/utils/mangadex'
 import { retry } from '@lifeomic/attempt'
 import { type AxiosResponse } from 'axios'
 import {
-  createWriteStream,
   existsSync,
   mkdirSync,
-  readFileSync,
-  unlink,
   writeFileSync
 } from 'fs'
-import sizeOf from 'image-size'
-import { basename, join, resolve } from 'path'
-import PDFDocument from 'pdfkit'
+import { join, resolve } from 'path'
 import {
   findMangaChapters,
   findMangaVolumes,
   getMangaVolumeCoverBuffer
 } from './mangadex-api-data'
 import { mangadexUploadClient } from './mangadex-clients'
-import JSZip from 'jszip'
 import { StoreConfigMangaEnum } from '@/models/enums'
 import { convertToMobi } from '@/utils/convert-to-mobi'
-import { createVolumeFolder } from './file'
+import { createChapterPDF, createVolumeFolder, generateZip } from './file'
 
 interface DownloadImagesResponse {
   path: string
@@ -63,7 +57,7 @@ export async function mangaDownload(
     }
 
     if (storeConfig === StoreConfigMangaEnum.MOBI) {
-      if(folderPath.includes('Vol.')) {
+      if (folderPath.includes('Vol.')) {
         folderPath = folderPath.split('Vol.')[0]
       }
       folderPath = createVolumeFolder(volume.volume, folderPath)
@@ -97,13 +91,13 @@ export async function mangaDownload(
 
     switch (storeConfig) {
       case StoreConfigMangaEnum.PDF:
-        await createChapterPDF(chaptersImagesPath, mangaName, volume.volume)
+        await createChapterPDF(chaptersImagesPath, mangaName, volume.volume, folderPath)
         break
       case StoreConfigMangaEnum.MOBI:
         await convertToMobi(folderPath, `${mangaName} - Vol. ${volume.volume}`)
         break
       case StoreConfigMangaEnum.ZIP:
-        await generateZip(mangaName, volumesPath)
+        await generateZip(mangaName, volumesPath, folderPath)
         break
       default:
         break
@@ -186,72 +180,3 @@ async function findImage(url: string): Promise<AxiosResponse<Buffer, any>> {
   })
 }
 
-async function createChapterPDF(
-  chaptersImagesPath: string[],
-  mangaName: string,
-  volume: string
-): Promise<string> {
-  console.log('📃 Creating PDF...')
-
-  const mangaPDF = new PDFDocument({
-    autoFirstPage: false,
-    compress: true
-  })
-
-  const fileName = `${mangaName} - Vol. ${volume}.pdf`
-  const filePath = resolve(folderPath, fileName)
-  mangaPDF.pipe(createWriteStream(filePath))
-
-  for (const imagePath of chaptersImagesPath) {
-    showLogs && console.log(`Adding page ${imagePath}`)
-    const dimensions = sizeOf(imagePath)
-
-    if (!dimensions.width || !dimensions.height) {
-      throw new Error('Image dimensions not found')
-    }
-
-    mangaPDF
-      .addPage({
-        size: [dimensions.width, dimensions.height],
-        margin: 0
-      })
-      .image(imagePath, 0, 0, {
-        fit: [dimensions.width, dimensions.height],
-        align: 'center',
-        valign: 'center'
-      })
-
-    unlink(imagePath, (err) => {
-      if (err) throw err
-    })
-  }
-
-  mangaPDF.end()
-  return filePath
-}
-
-async function generateZip(
-  mangaName: string,
-  volumesPath: string[]
-): Promise<void> {
-  console.log('🔒 Creating ZIP...')
-
-  const zip = new JSZip()
-  const zipFolder = zip.folder(mangaName)
-
-  for (const volumePath of volumesPath) {
-    const volumeName = basename(volumePath)
-    zipFolder?.file(volumeName, readFileSync(volumePath))
-
-    unlink(volumePath, (err) => {
-      if (err) throw err
-    })
-  }
-
-  await zip.generateAsync({ type: 'nodebuffer' }).then((content) => {
-    const zipPath = resolve(folderPath, `${mangaName}.zip`)
-    writeFileSync(zipPath, content)
-  })
-
-  console.log('✅ \x1b[32mZIP created!\x1b[0m')
-}
