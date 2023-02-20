@@ -15,14 +15,14 @@ import {
 import { mangaDownload } from '@/manga/manga-download'
 
 export async function cli(): Promise<void> {
-  let continueSearch = true
   let mangaInfo: Manga | null = null
+  let continueSearch = true
+  let mangaNotFound = false
 
   while (continueSearch) {
-    const mangaNameOrId = await getMangaNameOrId()
+    const mangaNameOrId = await getMangaNameOrId({ mangaNotFound })
 
     let mangaConfirmed = false
-
     let currentPage = 0
 
     while (!mangaConfirmed) {
@@ -30,6 +30,13 @@ export async function cli(): Promise<void> {
 
       currentPage = mangaSearchResult.currentPage
       mangaInfo = mangaSearchResult.mangaInfo
+
+      if (!mangaSearchResult.mangaFound) {
+        mangaNotFound = true
+        break
+      }
+
+      if (!mangaInfo) throw new Error('Manga info not defined')
 
       const mangaSelectionConfirmation = await confirmMangaSelection(mangaInfo)
 
@@ -54,8 +61,16 @@ export async function cli(): Promise<void> {
   })
 }
 
-async function getMangaNameOrId(): Promise<string> {
+async function getMangaNameOrId({
+  mangaNotFound
+}: {
+  mangaNotFound: boolean
+}): Promise<string> {
   console.clear()
+
+  if (mangaNotFound) {
+    console.log('\x1b[31m❌ Manga not found\x1b[0m')
+  }
 
   const { manga } = await prompt<{ manga: string }>({
     type: 'input',
@@ -69,7 +84,12 @@ async function getMangaNameOrId(): Promise<string> {
 async function findManga(
   mangaNameOrId: string,
   page?: number
-): Promise<{ mangaInfo: Manga; currentPage: number; mangaTitle: string }> {
+): Promise<{
+  mangaInfo: Manga | null
+  currentPage: number
+  mangaTitle: string
+  mangaFound: boolean
+}> {
   const isUuid = mangaNameOrId.match(
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
   )
@@ -82,6 +102,16 @@ async function findManga(
     mangaInfo = (await findMangaById(mangaNameOrId)).data
   } else {
     const mangaListResponse = await findMangaByTitle(mangaNameOrId, page)
+
+    if (mangaListResponse.total === 0) {
+      return {
+        mangaInfo: null,
+        currentPage: 0,
+        mangaTitle: '',
+        mangaFound: false
+      }
+    }
+
     const selectedMangaInfo = await getSelectedMangaInfo(
       mangaListResponse,
       mangaNameOrId
@@ -92,7 +122,7 @@ async function findManga(
     mangaTitle = selectedMangaInfo.mangaTitle
   }
 
-  return { mangaInfo, currentPage, mangaTitle }
+  return { mangaInfo, currentPage, mangaTitle, mangaFound: true }
 }
 
 async function getSelectedMangaInfo(
