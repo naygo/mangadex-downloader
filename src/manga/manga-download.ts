@@ -46,6 +46,8 @@ export async function mangaDownload(params: {
   const volumesInRange = getVolumesInRange(volumes, volumeRange)
   const covers = await getAllMangaCovers(mangaId)
 
+  const isOneShot = volumes.length === 1
+
   const volumesPath: string[] = []
 
   console.log(`🟢 \x1b[32mDOWNLOADING ${volumesInRange.length} VOLUMES\x1b[0m`)
@@ -63,7 +65,15 @@ export async function mangaDownload(params: {
         folderPath = folderPath.split(`${mangaName} - Vol.`)[0]
       }
 
-      folderPath = createVolumeFolder(mangaName, volume.volume, folderPath)
+      // Changes the volume number to have the same number of digits as the total number of volumes
+      // Ex: If manga has 10+ volumes, the volume number will be 01, 02, 03, etc
+      //     If manga has 100+ volumes, the volume number will be 001, 002, 003, etc
+      const volumeName = volume.volume.padStart(
+        String(volumes.length).length,
+        '0'
+      )
+
+      folderPath = createVolumeFolder(mangaName, volumeName, folderPath)
     }
 
     console.log('\x1b[37m-------------------------\x1b[0m')
@@ -72,7 +82,11 @@ export async function mangaDownload(params: {
     )
 
     const chaptersImagesPath: string[] = []
-    const volumeCover = covers.find((cover) => cover.volume === volume.volume)
+    let volumeCover = covers.find((cover) => cover.volume === volume.volume)
+
+    if (!volumeCover && isOneShot) {
+      volumeCover = covers[0]
+    }
 
     if (volumeCover) {
       const coverPath = await downloadAndSaveCover(

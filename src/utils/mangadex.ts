@@ -75,11 +75,7 @@ export async function getAllMangaCovers(mangaId: string): Promise<Cover[]> {
     mangaCoverCount = mangaCoversResponse.total
 
     for (const cover of mangaCoversResponse.data) {
-      const { attributes } = cover
-
-      if (attributes.volume === null) continue
-
-      covers.push(attributes)
+      covers.push(cover.attributes)
     }
 
     offset += mangaCoversResponse.limit

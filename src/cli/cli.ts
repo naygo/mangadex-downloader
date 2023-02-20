@@ -262,14 +262,14 @@ async function getMangaDownloadRange(): Promise<VolumeRange> {
     message: `[Optional] Enter the volumes range you want to download (e.g. 1-10)\n(1-1) will download only the first volume\n(1-10) will download the first 10 volumes\n(5-) will download from the 5th volume to the last one\n(Blank) will download all volumes\n`
   })
 
-  if (!volumesRange.match(/^[0-9]+-([0-9]+)?$/)) {
+  if (!volumesRange.match(/^([0-9]+-([0-9]+)?|)$/)) {
     return getMangaDownloadRange()
   }
 
   const [start, end] = volumesRange.split('-')
 
   return {
-    start: start ? parseInt(start) : 1,
+    start: start ? parseInt(start) : 0,
     end: end ? parseInt(end) : -1
   }
 }
