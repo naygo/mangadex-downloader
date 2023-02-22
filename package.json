@@ -43,6 +43,7 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "node-kcc": "file:./node-kcc",
     "@lifeomic/attempt": "^3.0.3",
     "axios": "^1.3.2",
     "dotenv": "^16.0.3",
