@@ -5,6 +5,8 @@ import JSZip from 'jszip'
 import sizeOf from 'image-size'
 import path from 'path'
 import PDFDocument from 'pdfkit'
+import { KccNode } from 'node-kcc'
+import { CroppingEnum } from 'node-kcc/dist/models'
 
 const showLogs = process.env.SHOW_LOGS === 'true'
 
