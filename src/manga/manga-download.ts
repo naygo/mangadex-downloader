@@ -4,7 +4,7 @@ import { StoreConfigMangaEnum } from '@/models/enums'
 import type { Chapter, VolumeRange } from '@/models/interfaces'
 import { getAllMangaCovers } from '@/utils/mangadex'
 import { type AxiosResponse } from 'axios'
-import { existsSync, rmdirSync, writeFileSync } from 'fs'
+import { existsSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import {
   findImage,
@@ -52,6 +52,8 @@ export async function mangaDownload(params: {
 
   console.log(`🟢 \x1b[32mDOWNLOADING ${volumesInRange.length} VOLUMES\x1b[0m`)
 
+  let volumeName = ''
+
   for (const volume of volumesInRange) {
     if (volume.volume === 'none') {
       volume.volume = 'Unreleased'
@@ -68,10 +70,7 @@ export async function mangaDownload(params: {
       // Changes the volume number to have the same number of digits as the total number of volumes
       // Ex: If manga has 10+ volumes, the volume number will be 01, 02, 03, etc
       //     If manga has 100+ volumes, the volume number will be 001, 002, 003, etc
-      const volumeName = volume.volume.padStart(
-        String(volumes.length).length,
-        '0'
-      )
+      volumeName = volume.volume.padStart(String(volumes.length).length, '0')
 
       folderPath = createVolumeFolder(mangaName, volumeName, folderPath)
     }
@@ -118,11 +117,11 @@ export async function mangaDownload(params: {
       case StoreConfigMangaEnum.MOBI:
         await convertToMobi({
           inputFile: folderPath,
-          mangaName: `${mangaName} - Vol. ${volume.volume}`,
+          mangaName: `${mangaName} - Vol. ${volumeName}`,
           outputDir: join(process.env.DOWNLOAD_FOLDER as string, mangaName)
         })
 
-        rmdirSync(folderPath, { recursive: true })
+        rmSync(folderPath, { recursive: true })
         break
       case StoreConfigMangaEnum.ZIP:
         volumesPath.push(folderPath)

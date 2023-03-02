@@ -100,7 +100,7 @@ export async function generateZip(
   await fs.promises.writeFile(zipPath, zipData)
 
   for (const volumePath of volumesPath) {
-    fs.promises.rmdir(volumePath, { recursive: true })
+    fs.promises.rm(volumePath, { recursive: true })
   }
 
   console.log(`✅ \x1b[32mZIP created: ${zipPath}\x1b[0m`)
