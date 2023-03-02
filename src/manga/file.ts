@@ -137,7 +137,7 @@ export async function convertToMobi(params: {
     inputFile,
     convertOptions: {
       title: mangaName,
-      cropping: CroppingEnum.MARGINS,
+      cropping: CroppingEnum.DISABLED,
       format: 'MOBI',
       mangaStyle: true,
       stretch: true,
